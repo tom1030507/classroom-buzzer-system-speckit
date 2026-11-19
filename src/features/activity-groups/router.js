@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createActivity, getActivity, getLatestActivity, joinActivity, listGroups } from './activities.js';
+import { createActivity, getActivity, joinActivity, listAvailableActivities, listGroups } from './activities.js';
 import { teacherConfigured, verifyTeacherPassword } from './password.js';
 import {
   endTeacherSession, readStudentSession, readTeacherSession, requireMutation,
@@ -24,11 +24,13 @@ export function createActivityGroupsRouter(deps) {
     res.json(endTeacherSession(deps, req, res));
   });
   router.post('/teacher/activities', teacherOnly, teacherMutation, (req, res) => {
-    res.status(201).json({ activity: createActivity(deps), groups: [] });
+    const activity = createActivity(deps);
+    res.status(201).json({ activity, groups: [], availableActivities: listAvailableActivities(db) });
   });
   router.get('/teacher/activities/current', teacherOnly, (req, res) => {
-    const activity = getLatestActivity(db);
-    res.json({ activity, groups: activity ? listGroups(db, activity.id) : [] });
+    const availableActivities = listAvailableActivities(db);
+    const activity = availableActivities[0] ?? null;
+    res.json({ activity, groups: activity ? listGroups(db, activity.id) : [], availableActivities });
   });
   router.get('/teacher/activities/:activityId', teacherOnly, (req, res) => {
     const activity = getActivity(db, req.params.activityId);

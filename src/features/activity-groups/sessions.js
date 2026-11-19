@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { forbidden, unauthorized } from '../../lib/errors.js';
 import { nowIso } from '../../lib/time.js';
 
@@ -32,9 +32,12 @@ function teacherSession({ db, clock }, req) {
 
 export function getGroupSession({ db }, req) {
   const token = readCookie(req, COOKIE.student);
-  if (!token) return null;
+  return token ? findGroupSession(db, token) : null;
+}
+
+export function findGroupSession(db, token) {
   const row = db.prepare(`
-    SELECT g.id AS groupId, g.name, a.id AS activityId, a.status, a.mode
+    SELECT g.id AS groupId, g.name, a.id AS activityId, a.join_code AS joinCode, a.status, a.mode
     FROM group_sessions AS s JOIN student_groups AS g ON g.id = s.group_id
     JOIN activities AS a ON a.id = g.activity_id WHERE s.token_hash = ?
   `).get(digest(token));
@@ -77,6 +80,7 @@ export function requireMutation(deps, role) {
     if (!cookie || !TOKEN_PATTERN.test(token) || !timingSafeEqual(Buffer.from(csrf(cookie)), Buffer.from(token))) {
       throw forbidden('INVALID_CSRF', '安全驗證已失效，請重新整理頁面。');
     }
+    req.mutationToken = cookie;
     next();
   };
 }
@@ -119,8 +123,12 @@ export function endTeacherSession({ db }, req, res) {
   return { authenticated: false, csrfToken: bootstrap(req, res, 'teacher') };
 }
 
-export function insertGroupSession(db, groupId) {
-  const token = newToken();
+export function groupJoinToken(db, previousToken) {
+  const { secret } = db.prepare('SELECT secret FROM group_join_secret WHERE id = 1').get();
+  return createHmac('sha256', secret).update(previousToken).digest('base64url');
+}
+
+export function insertGroupSession(db, groupId, token) {
   db.prepare('INSERT INTO group_sessions (token_hash, group_id) VALUES (?, ?)').run(digest(token), groupId);
   return token;
 }

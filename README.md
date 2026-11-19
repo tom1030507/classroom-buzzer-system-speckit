@@ -118,7 +118,7 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 | 項目 | 負責人 | Issue | 實作 PR | 審閱者 | 驗收紀錄 |
 | --- | --- | --- | --- | --- | --- |
 | 基礎架構 | 45678XYZ | — | — | — | — |
-| SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | — | — | [驗收](specs/001-activity-groups/acceptance.md) |
+| SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | [#24](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24) | — | [驗收](specs/001-activity-groups/acceptance.md) |
 | SF-02 線上題目匯入 | 待指派 | — | — | — | — |
 | SF-03 即時搶答 | 待指派 | — | — | — | — |
 | SF-04 結果與匯出 | 待指派 | — | — | — | — |

@@ -16,6 +16,11 @@ API --> 教師 : 加入碼
 學生 -> API : 以加入碼、組名加入
 API -> SQLite : 交易內檢查階段並新增組別與工作階段
 API --> 學生 : Cookie 及本人組別
+opt 加入回覆未收到
+學生 -> API : 使用原 Cookie 重試同一請求
+API -> SQLite : 以 HMAC 取得原工作階段
+API --> 學生 : 相同 Cookie 及本人組別
+end
 學生 -> API : 重新載入（原 Cookie）
 API -> SQLite : 讀回本人活動與組別
 API --> 學生 : 本人工作階段

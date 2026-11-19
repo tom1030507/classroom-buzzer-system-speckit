@@ -25,6 +25,10 @@ class "group_sessions" as GroupSession {
   token_hash
   group_id
 }
+class "group_join_secret" as JoinSecret {
+  secret
+}
+JoinSecret ..> GroupSession : 同瀏覽器加入重試
 Settings ..> TeacherSession : 登入驗證
 Activity "1" -- "0..*" StudentGroup
 StudentGroup "1" -- "0..1" GroupSession

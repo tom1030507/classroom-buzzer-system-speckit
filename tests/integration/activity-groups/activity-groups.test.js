@@ -122,3 +122,44 @@ test('AC-15 signed-in teacher and group resume after restarting the server', asy
   assert.equal((await teacher.request('activities/current')).data.activity.id, activityId);
   assert.equal((await student.request('session')).data.group.name, 'Restart group');
 });
+
+test('teacher can return to an unfinished activity after creating another', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teacher = await login(app);
+  const create = async () => (await teacher.request('activities', { method: 'POST' })).data.activity;
+  const first = await create();
+  const second = await create();
+  openActivity(app.db, first.id);
+  const { activity, availableActivities } = (await teacher.request('activities/current')).data;
+  assert.equal(activity.id, second.id);
+  assert.deepEqual(availableActivities.map(({ id }) => id), [second.id, first.id]);
+  assert.equal((await teacher.request(`activities/${first.id}`)).data.activity.status, 'OPEN');
+});
+
+test('the original browser can retry a join whose session cookie was lost', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teacher = await login(app);
+  const { activity } = (await teacher.request('activities', { method: 'POST' })).data;
+  const student = browser(app, 'student');
+  const bootstrap = await student.request('session');
+  const headers = {
+    Cookie: `buzzer_group_bootstrap=${student.cookies.get('buzzer_group_bootstrap')}`,
+    'Content-Type': 'application/json', Origin: app.baseUrl,
+    'X-CSRF-Token': bootstrap.data.csrfToken,
+  };
+  const join = (name) => app.request('/api/student/join', {
+    method: 'POST', headers, body: JSON.stringify({ joinCode: activity.joinCode, name }),
+  });
+  const first = await join('Transport retry');
+  assert.equal(first.status, 201);
+  openActivity(app.db, activity.id);
+  const retry = await join('Transport retry');
+  assert.equal(retry.status, 201);
+  assert.equal(first.headers.getSetCookie()[0].split(';')[0], retry.headers.getSetCookie()[0].split(';')[0]);
+  assert.equal((await join('Different name')).status, 409);
+  assert.equal(app.db.prepare('SELECT count(*) AS n FROM student_groups').get().n, 1);
+});

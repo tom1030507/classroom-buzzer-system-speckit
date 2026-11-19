@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { withTransaction } from '../../db/transaction.js';
 import { badRequest, conflict, notFound } from '../../lib/errors.js';
 import { nowIso } from '../../lib/time.js';
-import { getGroupSession, insertGroupSession } from './sessions.js';
+import { findGroupSession, getGroupSession, groupJoinToken, insertGroupSession } from './sessions.js';
 
 const ACTIVITY_FIELDS = 'id, join_code AS joinCode, status, mode, created_at AS createdAt';
 
@@ -12,8 +12,12 @@ export function getActivity(db, id) {
   return row;
 }
 
-export function getLatestActivity(db) {
-  return db.prepare(`SELECT ${ACTIVITY_FIELDS} FROM activities ORDER BY rowid DESC LIMIT 1`).get() ?? null;
+export function listAvailableActivities(db) {
+  return db.prepare(`
+    SELECT ${ACTIVITY_FIELDS} FROM activities
+    WHERE status <> 'CLOSED' OR rowid = (SELECT MAX(rowid) FROM activities)
+    ORDER BY rowid DESC
+  `).all();
 }
 
 export function listGroups(db, activityId) {
@@ -37,7 +41,7 @@ export function joinActivity(deps, req) {
   const joinCode = typeof body.joinCode === 'string' ? body.joinCode.trim().toUpperCase() : '';
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   if (Object.keys(body).some((key) => key !== 'name' && key !== 'joinCode') ||
-      !/^[A-Z0-9]{1,32}$/.test(joinCode) || !name || [...name].length > 100 || /[\p{Cc}]/u.test(name)) {
+      !/^[A-Z0-9]{1,32}$/.test(joinCode) || !name || !name.isWellFormed() || [...name].length > 100 || /[\p{Cc}]/u.test(name)) {
     throw badRequest('INVALID_JOIN', '請輸入有效的加入碼與組名（最多 100 個字元）。');
   }
 
@@ -45,6 +49,12 @@ export function joinActivity(deps, req) {
     const existing = getGroupSession(deps, req);
     if (existing && existing.status !== 'CLOSED') {
       throw conflict('ALREADY_JOINED', '你已加入一場進行中的活動。');
+    }
+    const token = groupJoinToken(db, req.mutationToken);
+    const previousJoin = findGroupSession(db, token);
+    if (previousJoin) {
+      if (previousJoin.name === name && previousJoin.joinCode === joinCode) return previousJoin;
+      throw conflict('ALREADY_JOINED', '這個工作階段已加入一場活動，請重新載入頁面。');
     }
     const activity = db.prepare('SELECT id, status, mode FROM activities WHERE join_code = ?').get(joinCode);
     if (!activity) throw notFound('INVALID_JOIN_CODE', '找不到這個加入碼。');
@@ -54,7 +64,7 @@ export function joinActivity(deps, req) {
       ON CONFLICT (activity_id, name) DO NOTHING RETURNING id
     `).get(activity.id, name, nowIso(clock));
     if (!group) throw conflict('JOIN_REJECTED', '無法使用這個組名加入，請輸入其他組名。');
-    const token = insertGroupSession(db, group.id);
+    insertGroupSession(db, group.id, token);
     return { token, groupId: group.id, name, activityId: activity.id, status: activity.status, mode: activity.mode };
   });
 }

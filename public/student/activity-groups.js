@@ -25,6 +25,15 @@ form.addEventListener('submit', async (event) => {
     }));
     form.reset();
   } catch (error) {
+    if (error.code === 'NETWORK_ERROR' || error.code === 'INVALID_CSRF') {
+      try {
+        const session = await apiFetch('/api/student/session');
+        updateSession(session);
+        if (session.group && session.activity.status !== 'CLOSED') return;
+      } catch {
+        // Keep the original join error visible when the session cannot be refreshed.
+      }
+    }
     setText(status, error.message);
   } finally {
     button.disabled = false;
