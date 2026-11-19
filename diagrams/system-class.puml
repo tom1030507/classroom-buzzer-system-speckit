@@ -1,0 +1,134 @@
+@startuml system-class
+title 課堂搶答系統 — 共用資料模型（spec.md §6；src/db/migrations/000-base-schema.sql）
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 260
+hide empty methods
+
+enum ActivityStatus {
+  PREPARING
+  OPEN
+  CLOSED
+}
+
+enum ActivityMode {
+  SPEED
+  FAIR
+}
+
+enum UnitKind {
+  SINGLE
+  GROUP
+}
+
+class Activity <<activities>> {
+  id : TEXT <<PK>>
+  join_code : TEXT <<UNIQUE>>
+  mode : ActivityMode = SPEED
+  status : ActivityStatus = PREPARING
+  created_at : UTC ISO 8601
+  opened_at : UTC ISO 8601?
+  closed_at : UTC ISO 8601?
+}
+
+class StudentGroup <<student_groups>> {
+  id : INTEGER <<PK>>
+  activity_id : TEXT <<FK>>
+  name : TEXT
+  created_at : UTC ISO 8601
+}
+
+class Unit <<units>> {
+  id : INTEGER <<PK>>
+  activity_id : TEXT <<FK>>
+  kind : UnitKind
+  group_code : TEXT?
+  position : INTEGER
+}
+
+class Question <<questions>> {
+  id : INTEGER <<PK>>
+  unit_id : INTEGER <<FK>>
+  question_key : TEXT
+  position : INTEGER
+  position_in_unit : INTEGER
+  spreadsheet_id : TEXT
+  sheet_id : INTEGER
+  sheet_title : TEXT
+  row_index : INTEGER
+  column_index : INTEGER
+  original_marker : TEXT
+}
+
+class Submission <<submissions>> {
+  id : INTEGER <<PK>>
+  unit_id : INTEGER <<FK>>
+  group_id : INTEGER <<FK>>
+  accept_seq : INTEGER
+  accepted_at : UTC ISO 8601
+}
+
+class SubmissionAnswer <<submission_answers>> {
+  submission_id : INTEGER <<FK>>
+  question_id : INTEGER <<FK>>
+  answer_text : TEXT
+}
+
+class Result <<results>> {
+  submission_id : INTEGER <<PK, FK>>
+  unit_id : INTEGER <<FK>>
+  final_rank : INTEGER
+  is_winner : BOOLEAN
+}
+
+class Session <<SF-01 新增>> #line.dashed {
+  由 SF-01 設計：
+  不可猜測的 Cookie、
+  角色、CSRF token
+}
+
+class ExportRecord <<SF-04 新增>> #line.dashed {
+  由 SF-04 設計：
+  逐題目標、寫入內容、
+  結果（成功／衝突／失敗／待核對）
+}
+
+Activity "1" *-- "0..*" StudentGroup
+Activity "1" *-- "0..*" Unit
+Unit "1" *-- "1..*" Question : 單題 1 題\n題組 ≥ 2 題
+Unit "1" -- "0..*" Submission
+StudentGroup "1" -- "0..*" Submission
+Submission "1" *-- "1..*" SubmissionAnswer
+SubmissionAnswer "0..*" --> "1" Question
+Submission "1" -- "0..1" Result
+Activity "1" -- "0..*" ExportRecord
+Session "0..*" ..> "0..1" Activity : 老師工作階段
+Session "1" ..> "0..1" StudentGroup : 每組一個有效工作階段
+Activity ..> ActivityStatus
+Activity ..> ActivityMode
+Unit ..> UnitKind
+
+note right of Activity
+  狀態只能 PREPARING → OPEN → CLOSED。
+  OPEN 後鎖定 mode、units、questions。
+  只有 PREPARING 可新增組別。
+end note
+
+note right of Question
+  question_key 活動內唯一；每題對應一格。
+  格位為 0-based；寫回前以 sheet_id
+  重新確認工作表與原標記（FR-07）。
+end note
+
+note bottom of Submission
+  UNIQUE(unit_id, group_id)：每組每單位一次。
+  UNIQUE(activity_id, accept_seq)：伺服器序號。
+  只在 OPEN 可新增；受理後不可修改或刪除。
+end note
+
+note bottom of Result
+  final_rank 單位內唯一；is_winner = (final_rank = 1)。
+  只在 CLOSED 可新增；之後不可修改或刪除。
+  實際受理順序看 accept_seq，最終順位另存於此。
+end note
+@enduml

@@ -1,0 +1,82 @@
+@startuml system-component
+title 課堂搶答系統 — 系統元件圖（基礎架構藍圖；各子功能圖表須與此一致）
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam wrapWidth 220
+
+actor "老師" as Teacher
+actor "學生\n（每組一個工作階段）" as Student
+
+package "瀏覽器：HTML／CSS／原生 JavaScript" {
+  [教師頁面\npublic/teacher/] as TeacherUI
+  [學生頁面\npublic/student/] as StudentUI
+  [共用前端模組\npublic/js/api.js・dom.js\n（只以 textContent 呈現使用者輸入）] as WebShared
+}
+
+node "Node.js 伺服器（只綁定 127.0.0.1）" {
+  [Express app\nsrc/app.js] as App
+  [HTTP 中介層 src/http/\n安全標頭（CSP）・JSON・統一錯誤格式] as Http
+
+  package "src/features/（每個子功能一個模組）" {
+    [SF-01 activity-groups\n教師密碼驗證・工作階段 Cookie\nCSRF／Origin・活動・加入碼・組別] as SF01
+    [SF-02 sheets-import\n標記解析・單題／題組單位\n預覽與確認匯入] as SF02
+    [SF-03 realtime-buzzer\n開啟／結束・原子受理・去重\nSSE 同步與事件過濾・教師監看] as SF03
+    [SF-04 results-export\n結果保存與檢視・寫回 Sheets\n匯出紀錄・CSV] as SF04
+    [SF-05 fair-ranking\n模式選擇與鎖定\n公平順位計算] as SF05
+  }
+
+  [Google Sheets Gateway\n（SF-02 建立讀取；SF-04 擴充寫回）] as Gateway
+  [資料存取 src/db/\n連線・migration・withTransaction] as Db
+  [共用工具 src/lib/\nAppError・logger（遮蔽機密）・clock] as Lib
+}
+
+database "SQLite\ndata/buzzer.sqlite" as SQLite
+cloud "Google Sheets API\n（老師的雲端試算表）" as SheetsApi
+file "服務帳戶金鑰\n（repository 之外；\nGOOGLE_APPLICATION_CREDENTIALS）" as Credentials
+
+Teacher --> TeacherUI
+Student --> StudentUI
+TeacherUI ..> WebShared
+StudentUI ..> WebShared
+TeacherUI --> App : HTTP API（JSON）＋ SSE
+StudentUI --> App : HTTP API（JSON）＋ SSE\n（只含自己組別的資料）
+
+App --> Http
+App --> SF01
+App --> SF02
+App --> SF03
+App --> SF04
+App --> SF05
+
+SF02 ..> SF01 : 教師權限
+SF03 ..> SF01 : 教師／組別工作階段
+SF03 ..> SF02 : 單位與題目
+SF04 ..> SF02 : 題目映射
+SF04 ..> SF03 : 受理紀錄
+SF05 ..> SF04 : 擴充結果計算
+SF05 ..> SF03 : 受理順序
+
+SF02 --> Gateway : 讀取
+SF04 --> Gateway : 重新讀取・寫回（RAW）
+Gateway --> SheetsApi : HTTPS
+Gateway ..> Credentials : 只由後端讀取
+
+SF01 --> Db
+SF02 --> Db
+SF03 --> Db
+SF04 --> Db
+SF05 --> Db
+Db --> SQLite
+
+note right of SF03
+  結束交易內呼叫 SF-04 的結果計算
+  （公平模式由 SF-05 擴充），
+  結束狀態與完整結果同交易保存（spec.md §4）。
+end note
+
+note bottom of Lib
+  所有子功能共用；錯誤回應格式為
+  { "error": { "code", "message" } }
+end note
+@enduml

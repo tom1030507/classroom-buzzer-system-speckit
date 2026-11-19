@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Local runtime data: SQLite database, sessions and teacher settings (never commit)
+data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Secrets: Google service account keys must live outside the repository (spec.md §7)
+.env
+.env.*
+!.env.example
+secrets/
+*service-account*.json
+*credentials*.json
+
+# Spec Kit machine-local state (.specify/.gitignore covers feature.json)
+.specify/extensions/.cache/
+.specify/extensions/*/.specify-dev/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS, editor and tooling noise
+.DS_Store
+Thumbs.db
+*.log
+coverage/

@@ -1,0 +1,69 @@
+@startuml system-sequence
+title 課堂搶答系統 — 端到端主流程（括號標註負責的子功能；API 細節由各子功能 plan 定義）
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam wrapWidth 300
+autonumber
+
+actor "老師" as Teacher
+participant "教師頁面" as TeacherUI
+actor "學生（各組）" as Student
+participant "學生頁面" as StudentUI
+participant "Express API\n＋ SSE" as Api
+database "SQLite" as Db
+participant "Google Sheets API" as Sheets
+
+== 準備中 PREPARING ==
+Teacher -> TeacherUI : 輸入本機教師密碼
+TeacherUI -> Api : 登入（SF-01）
+Api -> Db : 驗證密碼雜湊、建立工作階段
+Api --> TeacherUI : HttpOnly、SameSite=Strict Cookie＋CSRF token
+Teacher -> TeacherUI : 建立活動（預設速度模式；可改公平模式，SF-05）
+TeacherUI -> Api : 建立活動（SF-01）
+Api -> Db : 新增活動（PREPARING、加入碼）
+Teacher -> TeacherUI : 輸入試算表網址或 ID，選擇工作表
+TeacherUI -> Api : 匯入預覽（SF-02）
+Api -> Sheets : 以服務帳戶讀取儲存格值與合併格
+Sheets --> Api : 工作表內容
+Api -> Api : 解析 {{Q:題號}}／{{Q:題號|G:題組}}，\n建立單位與格位映射
+Api --> TeacherUI : 預覽：題號、總題數、單位數、題組成員、答案位置
+Teacher -> TeacherUI : 確認匯入
+TeacherUI -> Api : 確認匯入（SF-02）
+Api -> Db : 交易：以新匯入取代 units／questions
+Student -> StudentUI : 輸入加入碼與組名
+StudentUI -> Api : 加入（SF-01）
+Api -> Db : 新增組別（僅 PREPARING）
+Api --> StudentUI : 組別工作階段 Cookie
+
+== 搶答中 OPEN ==
+Teacher -> TeacherUI : 開啟活動
+TeacherUI -> Api : 開啟（SF-03）
+Api -> Db : 交易：status = OPEN（鎖定題目、單位順序、模式）
+Api --> TeacherUI : SSE 狀態變更（2 秒內）
+Api --> StudentUI : SSE 狀態變更（只含自己組別的資訊）
+Student -> StudentUI : 依題號填答並送出
+StudentUI -> Api : 送出單題或整個題組（SF-03）
+Api -> Db : 同一交易：狀態檢查 → 身分與單位驗證 → 去重\n→ 儲存答案 → 分配受理序號
+Api --> StudentUI : 受理回覆（題號、答案、受理識別）或明確錯誤
+Api --> TeacherUI : SSE 作答狀態、受理順序、暫定勝出者（僅教師）
+
+== 已結束 CLOSED ==
+Teacher -> TeacherUI : 結束（確認對話框）
+TeacherUI -> Api : 結束（SF-03）
+Api -> Db : 同一交易：status = CLOSED＋保存最終結果\n（速度模式 SF-04；公平模式 SF-05）
+Api --> StudentUI : SSE 已結束
+StudentUI -> Api : 查看結果（SF-04）
+Api --> StudentUI : 各題各組答案、受理順序、最終順位、勝出者
+Teacher -> TeacherUI : 預覽寫回
+TeacherUI -> Api : 寫回預覽（SF-04）
+Api -> Sheets : 重新讀取目標格，核對原標記與結構
+Api --> TeacherUI : 題號、勝出組、答案、目標格或衝突
+Teacher -> TeacherUI : 確認已暫停其他編輯，執行寫回
+TeacherUI -> Api : 寫回（SF-04）
+Api -> Sheets : 寫入前再核對 → batchUpdate（RAW）→ 回讀核對
+Api -> Db : 保存逐題匯出紀錄
+Api --> TeacherUI : 逐題結果（成功／衝突／失敗／待核對）
+Teacher -> TeacherUI : 下載 CSV
+TeacherUI -> Api : 匯出 CSV（SF-04）
+Api --> TeacherUI : UTF-8 BOM、CRLF、公式注入防護
+@enduml
