@@ -1,0 +1,22 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+title SF-01 活動與組別
+actor 教師
+actor 學生
+component "本機密碼 CLI" as CLI
+component "教師頁" as T
+component "學生頁" as S
+component "活動與組別 API" as API
+component "角色 Cookie 與 Origin／CSRF" as Auth
+database SQLite as DB
+教師 --> CLI
+教師 --> T
+學生 --> S
+T --> API
+S --> API
+API --> Auth
+Auth --> DB
+API --> DB : 活動及原子加入
+CLI --> DB : scrypt 雜湊
+@enduml

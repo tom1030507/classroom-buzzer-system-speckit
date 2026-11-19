@@ -13,12 +13,16 @@
         <a href="/">回首頁</a>
       </header>
       <main id="app">
-        <!--
-          各子功能在此加入自己的 <section>，並以獨立的 ES module 實作（public/student/<功能>.js）：
-          SF-01 加入與重連、SF-03 等待／作答／自己的受理紀錄、SF-04／SF-05 結束後結果。
-        -->
-        <p class="status" role="status">學生功能開發中。</p>
+        <p id="student-status" class="status" role="status">正在載入組別工作階段…</p>
+        <form id="student-join" hidden>
+          <label for="student-join-code">活動加入碼</label>
+          <input id="student-join-code" autocomplete="off" required />
+          <label for="student-name">組名</label>
+          <input id="student-name" autocomplete="off" required />
+          <button type="submit">加入活動</button>
+        </form>
       </main>
     </div>
+    <script type="module" src="/student/activity-groups.js"></script>
   </body>
 </html>

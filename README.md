@@ -8,7 +8,7 @@
 - 工程原則：[`.specify/memory/constitution.md`](.specify/memory/constitution.md)
 - 開發方法：[GitHub Spec Kit](https://github.com/github/spec-kit) 1.2.1，Claude Code 整合
 
-> 目前狀態：基礎架構完成；SF-01～SF-05 尚未開始實作。
+> 已實作教師驗證、活動建立與學生組別加入（SF-01）。
 
 ## 快速開始
 
@@ -17,6 +17,7 @@
 ```sh
 npm ci            # 依 package-lock.json 安裝鎖定版本
 npm test          # 執行自動化測試
+npm run setup:teacher  # 首次啟動前，在本機輸入教師密碼
 npm start         # http://127.0.0.1:3000（只綁定 localhost）
 npm run diagrams  # 以 PlantUML CLI 將 diagrams/*.puml 轉成同目錄 PNG
 ```
@@ -24,6 +25,8 @@ npm run diagrams  # 以 PlantUML CLI 將 diagrams/*.puml 轉成同目錄 PNG
 PlantUML 安裝：macOS 執行 `brew install plantuml`；其他平台請安裝 Java 與
 [PlantUML](https://plantuml.com/starting)，把 `plantuml` 加入 PATH，或設定 `PLANTUML_JAR`
 指向 `plantuml.jar`。
+
+教師開啟 `/teacher/` 登入並建立活動。學生在各自的瀏覽器工作階段開啟 `/student/`，輸入活動加入碼與組名。
 
 ### 環境變數
 
@@ -115,7 +118,7 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 | 項目 | 負責人 | Issue | 實作 PR | 審閱者 | 驗收紀錄 |
 | --- | --- | --- | --- | --- | --- |
 | 基礎架構 | 45678XYZ | — | — | — | — |
-| SF-01 活動與組別 | 待指派 | — | — | — | — |
+| SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | [#24](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24) | — | [驗收](specs/001-activity-groups/acceptance.md) |
 | SF-02 線上題目匯入 | 待指派 | — | — | — | — |
 | SF-03 即時搶答 | 待指派 | — | — | — | — |
 | SF-04 結果與匯出 | 待指派 | — | — | — | — |
