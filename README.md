@@ -8,7 +8,7 @@
 - 工程原則：[`.specify/memory/constitution.md`](.specify/memory/constitution.md)
 - 開發方法：[GitHub Spec Kit](https://github.com/github/spec-kit) 1.2.1，Claude Code 整合
 
-> 已實作教師驗證、活動建立與學生組別加入（SF-01）。
+> 已實作教師驗證、活動建立與學生組別加入（SF-01），以及 Google Sheets 線上題目匯入（SF-02）。
 
 ## 快速開始
 
@@ -40,7 +40,7 @@ PlantUML 安裝：macOS 執行 `brew install plantuml`；其他平台請安裝 J
 | `DATABASE_FILE` | `<DATA_DIR>/buzzer.sqlite` | 可設為 `:memory:` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | 未設定 | 服務帳戶金鑰的路徑，**必須在 repository 之外** |
 
-### Google Sheets 服務帳戶（SF-02 實作時補充細節）
+### Google Sheets 服務帳戶
 
 1. 在 Google Cloud Console 建立專案並啟用 **Google Sheets API**。
 2. 建立服務帳戶並下載 JSON 金鑰，存放在 repository 之外（例如
@@ -48,7 +48,8 @@ PlantUML 安裝：macOS 執行 `brew install plantuml`；其他平台請安裝 J
 3. 在 `.env` 設定 `GOOGLE_APPLICATION_CREDENTIALS` 為該檔的絕對路徑。
 4. 老師把自己的 Guided Notes 雲端副本「共用」給服務帳戶 email（編輯者權限）；
    不需要公開分享，也不需要 Drive 全域權限。
-5. 在原答案空格填入標記：單題 `{{Q:1}}`，題組 `{{Q:2|G:A}}`（spec.md FR-02）。
+5. 在原答案空格填入標記。單題例如 `{{Q:1}}`，題組例如 `{{Q:2|G:A}}`。同一題組至少兩題，答案格不能合併。
+6. 啟動伺服器，在教師頁建立活動。輸入雲端表網址或 ID，依需要的掃描順序選工作表。檢查預覽中的題號、題組及格位後，按「確認匯入」。
 
 ## 專案結構
 
@@ -119,7 +120,7 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 | --- | --- | --- | --- | --- | --- |
 | 基礎架構 | 45678XYZ | — | — | — | — |
 | SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | [#24](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24) | — | [驗收](specs/001-activity-groups/acceptance.md) |
-| SF-02 線上題目匯入 | 待指派 | — | — | — | — |
+| SF-02 線上題目匯入 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | — | — | [驗收](specs/002-sheets-import/acceptance.md) |
 | SF-03 即時搶答 | 待指派 | — | — | — | — |
 | SF-04 結果與匯出 | 待指派 | — | — | — | — |
 | SF-05 公平排序 | 待指派 | — | — | — | — |

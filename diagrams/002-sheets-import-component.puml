@@ -1,0 +1,26 @@
+@startuml 002-sheets-import-component
+!pragma layout smetana
+skinparam shadowing false
+title SF-02 線上題目匯入（FR-02、FR-08）
+actor 教師
+component "教師頁\npublic/teacher/sheets-import.js" as UI
+component "匯入 API\nsheets-import/router.js" as API
+component "SF-01 教師權限及工作階段" as Auth
+component "工作表標記解析\nparser.js" as Parser
+component "Google Sheets Gateway\ngateway.js" as Gateway
+cloud "Sheets API 及 OAuth" as Google
+component "單位與題目\nunits.js" as Units
+database "SQLite\nunits、questions" as Db
+component "SF-03 即時搶答" as Buzzer
+file "服務帳戶金鑰\nrepository 之外" as Key
+教師 --> UI
+UI --> API
+API --> Auth
+API --> Gateway
+Gateway --> Google
+Gateway ..> Key
+API --> Parser
+API --> Units
+Units --> Db
+Buzzer --> Units : 只讀單位與題號
+@enduml

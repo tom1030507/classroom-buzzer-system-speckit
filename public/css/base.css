@@ -148,3 +148,7 @@ form {
   align-items: center;
   gap: 0.5rem;
 }
+
+input[type="checkbox"] {
+  width: auto;
+}

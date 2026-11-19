@@ -1,0 +1,35 @@
+@startuml 002-sheets-import-class
+!pragma layout smetana
+skinparam shadowing false
+title SF-02 匯入資料模型（FR-02、FR-08）
+class "Activity\nactivities" as Activity
+class "Unit\nunits" as Unit {
+  id
+  kind
+  group_code
+  position
+}
+class "Question\nquestions" as Question {
+  question_key
+  position / position_in_unit
+  spreadsheet_id / sheet_id / sheet_title
+  row_index / column_index
+  original_marker
+}
+class ImportPreview {
+  previewId
+  activityId / teacher session
+  expiresAt
+  spreadsheetId
+  units / questionCount
+}
+Activity "1" *-- "0..*" Unit
+Unit "1" *-- "1..*" Question
+ImportPreview ..> Activity
+ImportPreview ..> Unit : 確認後整批取代
+note right of Question
+  題號活動內唯一
+  格位為 0-based
+  一格只對應一個題號
+end note
+@enduml
