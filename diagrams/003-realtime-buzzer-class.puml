@@ -1,0 +1,32 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+title SF-03 受理資料
+class "activities" as Activity {
+  status : PREPARING | OPEN | CLOSED
+  mode : SPEED | FAIR
+}
+class "units" as Unit
+class "student_groups" as StudentGroup
+class "submissions" as Submission {
+  accept_seq : 活動內唯一遞增
+  accepted_at : UTC
+}
+class "submission_answers" as Answer {
+  question_id
+  answer_text
+}
+class "submission_receipts" as Receipt {
+  submission_id
+  receipt_id
+}
+Activity "1" -- "0..*" Unit
+Unit "1" -- "0..*" Submission
+StudentGroup "1" -- "0..*" Submission
+Submission "1" -- "1..*" Answer
+Submission "1" -- "1" Receipt
+note right of Receipt
+  學生只取得自己的不透明識別，
+  教師可見受理序號及各組狀態。
+end note
+@enduml

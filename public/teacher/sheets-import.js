@@ -49,6 +49,7 @@ function openImport(activity) {
   let selection = [];
   let pending;
   let busy = false;
+  let liveImportUpdates = 0;
 
   function showStatus(message, type = '') {
     setText(status, message);
@@ -170,21 +171,28 @@ function openImport(activity) {
   });
 
   confirmButton.addEventListener('click', () => void perform('正在確認匯入…', async () => {
+    const previousUpdate = liveImportUpdates;
     const { imported } = await request('/confirm', { previewId: pending });
     if (signal.aborted) return;
     clearPreview();
-    renderCurrent(imported);
+    if (liveImportUpdates === previousUpdate) renderCurrent(imported);
     showStatus(`已匯入 ${imported.questionCount} 題、${imported.unitCount} 個作答單位。`, 'success');
   }));
 
   void perform('正在讀取已確認的匯入…', async () => {
-    const { imported } = await apiFetch(endpoint, { signal });
-    if (signal.aborted) return;
-    renderCurrent(imported);
-    showStatus('');
+    try {
+      const { imported } = await apiFetch(endpoint, { signal });
+      if (!signal.aborted && liveImportUpdates === 0) renderCurrent(imported);
+    } catch (error) {
+      if (liveImportUpdates === 0) throw error;
+    }
+    if (!signal.aborted) showStatus('');
   });
 
-  return { id, controller };
+  return { id, controller, updateConfirmedImport(imported) {
+    liveImportUpdates += 1;
+    renderCurrent(imported);
+  } };
 }
 
 function showActivity({ detail: activity }) {
@@ -201,3 +209,6 @@ function showActivity({ detail: activity }) {
 
 document.addEventListener('teacher-activity', showActivity);
 document.addEventListener('teacher-activity-phase', showActivity);
+document.addEventListener('teacher-import-changed', ({ detail }) => {
+  if (active?.id === detail.activityId) active.updateConfirmedImport(detail.imported);
+});

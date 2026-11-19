@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { withTransaction } from '../../db/transaction.js';
 import { conflict } from '../../lib/errors.js';
 import { getActivity } from '../activity-groups/activities.js';
@@ -44,6 +45,12 @@ export function readImport(db, activityId) {
     units.get(unitId).questions.push(question);
   }
   return { spreadsheetId: rows[0].spreadsheetId, questionCount: rows.length, unitCount: units.size, units: [...units.values()] };
+}
+
+export function confirmedImportSnapshot(db, activityId) {
+  const imported = readImport(db, activityId);
+  const importRevision = createHash('sha256').update(JSON.stringify(imported)).digest('base64url');
+  return { imported, importRevision };
 }
 
 export function replaceImport(db, activityId, { spreadsheetId, units }) {

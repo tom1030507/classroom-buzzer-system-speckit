@@ -8,7 +8,7 @@
 - 工程原則：[`.specify/memory/constitution.md`](.specify/memory/constitution.md)
 - 開發方法：[GitHub Spec Kit](https://github.com/github/spec-kit) 1.2.1，Claude Code 整合
 
-> 已實作教師驗證、活動建立與學生組別加入（SF-01），以及 Google Sheets 線上題目匯入（SF-02）。
+> 已實作教師驗證、活動建立與學生組別加入（SF-01），Google Sheets 線上題目匯入（SF-02），以及即時搶答（SF-03）。
 
 ## 快速開始
 
@@ -26,7 +26,7 @@ PlantUML 安裝：macOS 執行 `brew install plantuml`；其他平台請安裝 J
 [PlantUML](https://plantuml.com/starting)，把 `plantuml` 加入 PATH，或設定 `PLANTUML_JAR`
 指向 `plantuml.jar`。
 
-教師開啟 `/teacher/` 登入並建立活動。學生在各自的瀏覽器工作階段開啟 `/student/`，輸入活動加入碼與組名。
+教師開啟 `/teacher/` 登入並建立活動。學生在各自的瀏覽器工作階段開啟 `/student/`，輸入活動加入碼與組名。匯入至少一題後，教師可開啟搶答，學生按單題或題組送出。
 
 ### 環境變數
 
@@ -120,8 +120,8 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 | --- | --- | --- | --- | --- | --- |
 | 基礎架構 | 45678XYZ | — | — | — | — |
 | SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | [#24](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24) | — | [驗收](specs/001-activity-groups/acceptance.md) |
-| SF-02 線上題目匯入 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | — | — | [驗收](specs/002-sheets-import/acceptance.md) |
-| SF-03 即時搶答 | 待指派 | — | — | — | — |
+| SF-02 線上題目匯入 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | [#25](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25) | — | [驗收](specs/002-sheets-import/acceptance.md) |
+| SF-03 即時搶答 | tom1030507 | [#9](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/9) | — | — | [驗收](specs/003-realtime-buzzer/acceptance.md) |
 | SF-04 結果與匯出 | 待指派 | — | — | — | — |
 | SF-05 公平排序 | 待指派 | — | — | — | — |
 
