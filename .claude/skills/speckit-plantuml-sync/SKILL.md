@@ -1,0 +1,1 @@
+../../../.specify/extensions/plantuml/.specify-dev/agent-commands/claude/speckit-plantuml-sync/SKILL.md

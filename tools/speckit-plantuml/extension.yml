@@ -1,0 +1,54 @@
+schema_version: "1.0"
+
+extension:
+  id: plantuml
+  name: "PlantUML Diagrams"
+  version: "1.0.0"
+  description: "Generate component, class and sequence PlantUML diagrams during specification, render PNGs with the PlantUML CLI, and re-sync them after implementation (spec.md DC-03)"
+  author: classroom-buzzer-system-speckit
+  repository: https://github.com/tom1030507/classroom-buzzer-system-speckit
+  license: MIT
+
+requires:
+  speckit_version: ">=1.0.0"
+  tools:
+    - name: plantuml
+      required: false
+
+provides:
+  commands:
+    - name: speckit.plantuml.diagrams
+      file: commands/speckit.plantuml.diagrams.md
+      description: "Generate or update the feature's component, class and sequence PlantUML diagrams in ./diagrams and render PNGs"
+    - name: speckit.plantuml.sync
+      file: commands/speckit.plantuml.sync.md
+      description: "Verify the feature's PlantUML diagrams against the implementation, update them and re-render PNGs"
+
+hooks:
+  after_specify:
+    command: speckit.plantuml.diagrams
+    priority: 5
+    optional: false
+    description: "Generate component/class/sequence diagrams for the new specification (DC-03)"
+  after_clarify:
+    command: speckit.plantuml.diagrams
+    priority: 5
+    optional: true
+    prompt: "Update the PlantUML diagrams to reflect the clarified specification?"
+    description: "Refresh diagrams after spec clarification"
+  after_plan:
+    command: speckit.plantuml.diagrams
+    priority: 5
+    optional: true
+    prompt: "Update the PlantUML diagrams to match design decisions recorded in plan.md?"
+    description: "Keep diagrams consistent with the plan"
+  after_implement:
+    command: speckit.plantuml.sync
+    priority: 5
+    optional: false
+    description: "Check diagrams against the implemented code and re-render PNGs (DC-03)"
+
+tags:
+  - "diagram"
+  - "plantuml"
+  - "documentation"
