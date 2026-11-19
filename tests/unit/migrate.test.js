@@ -19,14 +19,17 @@ const BASE_TABLES = [
 describe('migrate (project migrations)', () => {
   test('creates the shared base schema and is idempotent', () => {
     const db = openDatabase(':memory:');
-    assert.deepEqual(migrate(db), ['000-base-schema.sql']);
+    const files = fs.readdirSync(new URL('../../src/db/migrations/', import.meta.url))
+      .filter((file) => file.endsWith('.sql')).sort();
+    assert.deepEqual(migrate(db), files);
+    assert.equal(files[0], '000-base-schema.sql');
     assert.deepEqual(migrate(db), []);
 
     const tables = db
       .prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
       .all()
       .map((row) => row.name);
-    assert.deepEqual(tables, [...BASE_TABLES, 'schema_migrations'].sort());
+    for (const name of [...BASE_TABLES, 'schema_migrations']) assert.ok(tables.includes(name), name);
     assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
   });
 });

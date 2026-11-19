@@ -1,0 +1,31 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+title SF-01 資料模型
+class "teacher_settings" as Settings {
+  salt
+  password_hash
+}
+class "teacher_sessions" as TeacherSession {
+  token_hash
+  expires_at
+}
+class "activities" as Activity {
+  id
+  join_code
+  status = PREPARING
+  mode = SPEED
+}
+class "student_groups" as StudentGroup {
+  id
+  activity_id
+  name
+}
+class "group_sessions" as GroupSession {
+  token_hash
+  group_id
+}
+Settings ..> TeacherSession : 登入驗證
+Activity "1" -- "0..*" StudentGroup
+StudentGroup "1" -- "0..1" GroupSession
+@enduml

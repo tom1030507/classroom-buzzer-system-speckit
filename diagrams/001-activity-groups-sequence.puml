@@ -1,0 +1,22 @@
+@startuml
+skinparam shadowing false
+title SF-01 登入、加入與重連
+actor 教師
+actor 學生
+participant API
+database SQLite
+教師 -> API : 取得工作階段及 CSRF
+教師 -> API : 登入（密碼、CSRF）
+API -> SQLite : 讀 scrypt 設定並保存工作階段
+API --> 教師 : Cookie 及 CSRF
+教師 -> API : 建立活動
+API -> SQLite : 新增準備中的活動
+API --> 教師 : 加入碼
+學生 -> API : 取得工作階段及 CSRF
+學生 -> API : 以加入碼、組名加入
+API -> SQLite : 交易內檢查階段並新增組別與工作階段
+API --> 學生 : Cookie 及本人組別
+學生 -> API : 重新載入（原 Cookie）
+API -> SQLite : 讀回本人活動與組別
+API --> 學生 : 本人工作階段
+@enduml

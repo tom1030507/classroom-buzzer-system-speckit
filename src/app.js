@@ -2,6 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { apiNotFound, errorHandler } from './http/errors.js';
 import { noStore, securityHeaders } from './http/security-headers.js';
+import { createActivityGroupsRouter } from './features/activity-groups/router.js';
 import { systemClock } from './lib/time.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
@@ -32,7 +33,7 @@ export function createApp({ db, config, logger, clock = systemClock }) {
 
   // ── Feature routers ─────────────────────────────────────────────────────────
   // 每個子功能在 src/features/<slug>/ 匯出 router factory，並在此以一行掛載，例如：
-  //   api.use(createActivityGroupsRouter(deps));   // SF-01 001-activity-groups
+  api.use(createActivityGroupsRouter(deps));
   //   api.use(createSheetsImportRouter(deps));     // SF-02 002-sheets-import
   //   api.use(createRealtimeBuzzerRouter(deps));   // SF-03 003-realtime-buzzer
   //   api.use(createResultsExportRouter(deps));    // SF-04 004-results-export

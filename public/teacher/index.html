@@ -13,13 +13,26 @@
         <a href="/">回首頁</a>
       </header>
       <main id="app">
-        <!--
-          各子功能在此加入自己的 <section>，並以獨立的 ES module 實作（public/teacher/<功能>.js）：
-          SF-01 驗證與建立活動、SF-02 匯入與預覽、SF-03 開啟／監看／結束、
-          SF-04 結果／寫回 Sheets／CSV、SF-05 模式選擇。
-        -->
-        <p class="status" role="status">教師功能開發中。</p>
+        <p id="teacher-status" class="status" role="status">正在載入教師工作階段…</p>
+        <form id="teacher-login" hidden>
+          <label for="teacher-password">教師密碼</label>
+          <input id="teacher-password" type="password" autocomplete="current-password" required />
+          <button type="submit">登入</button>
+        </form>
+        <section id="teacher-activities" hidden aria-label="活動管理">
+          <div class="actions">
+            <button id="create-activity" type="button">建立新活動</button>
+            <button id="teacher-logout" type="button">登出</button>
+          </div>
+          <section id="teacher-activity" hidden aria-label="目前活動">
+            <p>學生加入碼 <strong id="join-code"></strong></p>
+            <h2>已加入的組別</h2>
+            <button id="refresh-groups" type="button">重新載入組別</button>
+            <ul id="teacher-groups"></ul>
+          </section>
+        </section>
       </main>
     </div>
+    <script type="module" src="/teacher/activity-groups.js"></script>
   </body>
 </html>
