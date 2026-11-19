@@ -14,16 +14,20 @@
 此目錄是 extension 的原始碼；安裝後的副本位於 `.specify/extensions/plantuml/`，
 Claude Code skill 位於 `.claude/skills/speckit-plantuml-*`，兩者都已提交版控，clone 後即可使用。
 
-修改指令內容後，在 repository 根目錄重新安裝：
+修改指令內容後，在 repository 根目錄重新安裝，**再把 skill 換成實體檔案**後才提交：
 
 ```sh
 specify extension add tools/speckit-plantuml --dev --force --priority 5
+for f in .claude/skills/speckit-plantuml-*/SKILL.md; do cp "$f" "$f.tmp" && mv "$f.tmp" "$f"; done
 ```
+
+Spec Kit 1.2.1 只能用 `--dev` 安裝本地 extension（本地路徑會被當成目錄名稱，`file://` 網址也不接受），
+而 `--dev` 會把 skill 建成指向 `.specify/extensions/plantuml/.specify-dev/` 的 symlink。
+這個暫存目錄已列入 `.gitignore`，若直接提交 symlink，其他人 clone 後就讀不到 skill；
+`tests/unit/speckit-skills.test.js` 會擋下這種情況。
 
 `extension.yml` 中每個 hook 都設定 `priority: 5`（git extension 為 10），
 依優先序執行時，圖表會在 git auto-commit 之前產生；git auto-commit 預設為關閉。
-安裝時會產生 `.specify/extensions/plantuml/.specify-dev/`（開發模式的暫存副本），
-已列入 `.gitignore`。
 
 ## 前置需求
 
