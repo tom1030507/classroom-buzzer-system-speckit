@@ -93,11 +93,14 @@ test('AC-03 all parser and access failures preserve the previous confirmed impor
     [[], 'IMPORT_NO_QUESTIONS'],
     [['{{Q:1}}', '{{Q:1}}'], 'IMPORT_DUPLICATE_QUESTION'],
     [['{{Q:bad/cell}}'], 'IMPORT_INVALID_MARKER'],
+    [['{{Q:1}}', '｛｛Q:2｝｝'], 'IMPORT_INVALID_MARKER'],
     [['{{Q:1|G:alone}}'], 'IMPORT_SINGLE_MEMBER_GROUP'],
   ];
   for (const [cells, code] of failures) {
     readSelected = () => [grid(0, 'import', 0, 0, cells)];
-    assert.equal((await request(activityId, '/preview', validPreview)).data.error.code, code);
+    const response = await request(activityId, '/preview', validPreview);
+    assert.equal(response.status, 400);
+    assert.equal(response.data.error.code, code);
     assert.deepEqual(importedQuestions(app.db, activityId), original);
   }
   readSelected = () => [grid(0, 'import', 0, 0, ['{{Q:1}}'], [{ endRowIndex: 1, endColumnIndex: 2 }])];
