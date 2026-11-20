@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { startServer } from '../../../src/server.js';
 import { silentLogger } from '../../../src/lib/logger.js';
+import { listWinningAnswers } from '../../../src/features/results-export/results.js';
 import { browser } from '../../helpers/browser.js';
 import { insertSingleUnit } from '../../helpers/fixtures.js';
 import { startTestApp } from '../../helpers/test-app.js';
@@ -390,4 +391,187 @@ test('AC-09 FR-012 a fair activity shows a group nothing about the others, and t
   const speedLive = (await teacher.request(api(speedGame.activity.id, 'live'))).data;
   assert.equal(speedLive.units[0].winnerGroupId, speedLive.units[0].submissions[0].groupId);
   assert.notEqual(speedLive.units[0].winnerGroupId, null);
+});
+
+// ── User story 3: the result page, the write-back and the CSV agree ────────────────────
+
+/** Spreadsheet double that starts with every imported marker in place (automated tests only). */
+function markerSpreadsheet() {
+  const cells = new Map();
+  const key = ({ sheetId, rowIndex, columnIndex }) => `${sheetId}:${rowIndex}:${columnIndex}`;
+  const sheet = { id: 0, title: 'Sheet1', rowCount: 100, columnCount: 26, merges: [] };
+  return {
+    load(db, activityId) {
+      for (const row of db.prepare(`
+        SELECT sheet_id AS sheetId, row_index AS rowIndex, column_index AS columnIndex, original_marker AS marker
+        FROM questions WHERE activity_id = ?
+      `).all(activityId)) cells.set(key(row), { stringValue: row.marker });
+    },
+    async readTargets(spreadsheetId, targets) {
+      return targets.map((target) => ({ sheet, value: cells.get(key(target)) ?? null }));
+    },
+    async writeCells(spreadsheetId, written) {
+      for (const cell of written) cells.set(key(cell), { stringValue: cell.text });
+    },
+  };
+}
+
+/**
+ * Two single-question units and two groups, with the mode chosen through the endpoint while preparing.
+ * 甲組 answers each unit just before 乙組 (AC-21).
+ */
+async function playTwoUnits(app, teacher, { mode }) {
+  const { activity, units } = await createActivity(app, teacher, { units: 2 });
+  assert.equal((await post(teacher, modePath(activity.id), { mode })).status, 200);
+  const alpha = await joinGroup(app, activity.joinCode, '甲組');
+  const beta = await joinGroup(app, activity.joinCode, '乙組');
+  assert.equal((await post(teacher, api(activity.id, 'open'))).status, 200);
+  const [one, two] = units;
+  await submit(alpha, one, '甲組第一題');
+  await submit(beta, one, '乙組第一題');
+  await submit(alpha, two, '甲組第二題');
+  await submit(beta, two, '乙組第二題');
+  return { activity, units, alpha, beta };
+}
+
+const CSV_COLUMNS = [
+  'activity_id', 'mode', 'unit_id', 'question_id', 'group_name', 'answer', 'accepted_at', 'accepted_order', 'rank', 'is_winner',
+];
+
+/** CSV rows reduced to the columns these tests compare (none of these answers contain commas). */
+async function readCsv(teacher, id) {
+  const response = await teacher.request(api(id, 'results.csv'));
+  assert.equal(response.status, 200);
+  const rows = (await response.text()).replace(/^\uFEFF/, '').trimEnd().split('\r\n').map((line) => line.split(','));
+  assert.deepEqual(rows[0], CSV_COLUMNS);
+  return rows.slice(1).map(([, mode, unit, question, group, , , order, rank, winner]) => [
+    mode, unit, question, group, order, rank, winner,
+  ]);
+}
+
+const previewOf = async (teacher, id) => (await post(teacher, `${api(id, 'sheets-export')}/preview`)).data;
+const previewContents = (preview) => preview.items.map(({ questionKey, groupName, content, status }) => [
+  questionKey, groupName, content, status,
+]);
+
+test('AC-23 the result page, the CSV and the write-back preview agree on a fair activity', async (t) => {
+  const spreadsheet = markerSpreadsheet();
+  const app = await startTestApp({ sheetsGateway: spreadsheet });
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity, alpha, beta } = await playTwoUnits(app, teacher, { mode: 'FAIR' });
+  spreadsheet.load(app.db, activity.id);
+  assert.equal((await close(teacher, activity.id)).status, 200);
+
+  const results = await teacher.request(api(activity.id, 'results'));
+  assert.equal(results.status, 200);
+  assert.equal(results.data.activity.mode, 'FAIR');
+  const [first, second] = results.data.units;
+  assert.deepEqual(summary(first), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
+  assert.deepEqual(summary(second), [['乙組', 1, 2, true], ['甲組', 2, 1, false]]);
+  for (const student of [alpha, beta]) assert.deepEqual((await student.request('results')).data, results.data);
+
+  // The CSV keeps the acceptance order and the final rank apart, and marks the rank-1 group as the winner.
+  assert.deepEqual(await readCsv(teacher, activity.id), [
+    ['FAIR', 'Q:1', '1', '甲組', '1', '1', 'true'],
+    ['FAIR', 'Q:1', '1', '乙組', '2', '2', 'false'],
+    ['FAIR', 'Q:2', '2', '乙組', '2', '1', 'true'],
+    ['FAIR', 'Q:2', '2', '甲組', '1', '2', 'false'],
+  ]);
+
+  // The write-back targets the rank-1 answer of every unit: 乙組 in the second unit, not the fastest 甲組.
+  const preview = await previewOf(teacher, activity.id);
+  assert.deepEqual(previewContents(preview), [
+    ['1', '甲組', '甲組第一題', 'READY'],
+    ['2', '乙組', '乙組第二題', 'READY'],
+  ]);
+});
+
+test('FR-016 results, CSV and the winning answers behind the write-back stay the same after the server restarts', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'fair-consistency-restart-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const env = { PORT: '0', DATABASE_FILE: join(directory, 'buzzer.sqlite') };
+  async function boot() {
+    const running = await startServer({ env, logger: silentLogger });
+    const baseUrl = `http://127.0.0.1:${running.server.address().port}`;
+    return { ...running, baseUrl, request: (path, options) => fetch(new URL(path, baseUrl), options) };
+  }
+  // The write-back preview is built from the saved winners, so they are compared directly (the server
+  // started here uses the real Google gateway, which the preview itself would call).
+  const winners = (db, id) => JSON.parse(JSON.stringify(listWinningAnswers(db, id)));
+
+  let saved;
+  const first = await boot();
+  try {
+    const teacher = await makeTeacher(first);
+    const { activity } = await playTwoUnits(first, teacher, { mode: 'FAIR' });
+    assert.equal((await close(teacher, activity.id)).status, 200);
+    saved = {
+      id: activity.id,
+      teacher,
+      results: (await teacher.request(api(activity.id, 'results'))).data,
+      csv: await readCsv(teacher, activity.id),
+      winners: winners(first.db, activity.id),
+    };
+  } finally {
+    await first.close();
+  }
+
+  const second = await boot();
+  t.after(() => second.close());
+  const teacher = withCookie(second, 'teacher', saved.teacher, 'buzzer_teacher');
+  assert.deepEqual((await teacher.request(api(saved.id, 'results'))).data, saved.results);
+  assert.deepEqual(await readCsv(teacher, saved.id), saved.csv);
+  assert.deepEqual(winners(second.db, saved.id), saved.winners);
+  assert.deepEqual(saved.winners.map(({ content }) => content), ['甲組第一題', '乙組第二題']);
+});
+
+test('FR-017 SC-006 a speed activity still crowns the fastest group of every unit', async (t) => {
+  const spreadsheet = markerSpreadsheet();
+  const app = await startTestApp({ sheetsGateway: spreadsheet });
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await playTwoUnits(app, teacher, { mode: 'SPEED' });
+  spreadsheet.load(app.db, activity.id);
+  assert.equal((await close(teacher, activity.id)).status, 200);
+
+  const results = await teacher.request(api(activity.id, 'results'));
+  assert.equal(results.data.activity.mode, 'SPEED');
+  const [first, second] = results.data.units;
+  assert.deepEqual(summary(first), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
+  assert.deepEqual(summary(second), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
+  assert.deepEqual(await readCsv(teacher, activity.id), [
+    ['SPEED', 'Q:1', '1', '甲組', '1', '1', 'true'],
+    ['SPEED', 'Q:1', '1', '乙組', '2', '2', 'false'],
+    ['SPEED', 'Q:2', '2', '甲組', '1', '1', 'true'],
+    ['SPEED', 'Q:2', '2', '乙組', '2', '2', 'false'],
+  ]);
+  assert.deepEqual(previewContents(await previewOf(teacher, activity.id)), [
+    ['1', '甲組', '甲組第一題', 'READY'],
+    ['2', '甲組', '甲組第二題', 'READY'],
+  ]);
+});
+
+test('SC-005 a fair activity gives students no results before it closes, and afterwards only their own activity', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity, alpha } = await playTwoUnits(app, teacher, { mode: 'FAIR' });
+
+  const early = await alpha.request('results');
+  assert.equal(early.status, 409);
+  assert.equal(early.data.error.code, 'INVALID_PHASE');
+  assert.doesNotMatch(JSON.stringify(early.data), /乙組|第二題/);
+
+  assert.equal((await close(teacher, activity.id)).status, 200);
+  const own = await alpha.request('results');
+  assert.equal(own.status, 200);
+  assert.equal(own.data.activity.id, activity.id);
+
+  const next = await createActivity(app, teacher);
+  assert.equal((await post(teacher, modePath(next.activity.id), { mode: 'FAIR' })).status, 200);
+  const newcomer = await joinGroup(app, next.activity.joinCode, '丙組');
+  const other = await newcomer.request('results');
+  assert.equal(other.status, 409);
+  assert.doesNotMatch(JSON.stringify(other.data), /甲組|乙組|第一題|第二題/);
 });
