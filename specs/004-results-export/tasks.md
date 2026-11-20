@@ -40,18 +40,18 @@ description: "SF-04 結果與匯出的任務清單"
 
 ### Tests（先寫並確認失敗）
 
-- [ ] T002 [P] 在 `tests/unit/results-export/ranking.test.js` 為 `rankSpeed` 寫測試：每個單位依 `acceptSeq` 由小到大給 `finalRank` 1、2、3…；沒有受理的單位不產生資料；同一組在不同單位各自排名；回傳 `{ submissionId, unitId, finalRank }`（[contracts/ranking.md](contracts/ranking.md)）
-- [ ] T003 [P] 在 `tests/unit/results-export/results.test.js` 以 `tests/helpers/fixtures.js` 與 SF-03 的 `transitionActivity` 寫測試：(a) 結束時同交易保存結果——單題 A 組 `final_rank` 1、B 組 2，題組由 B 組勝出且每筆受理只有一列，無人作答單位沒有結果（AC-11）；(b) `results` 的 UPDATE、DELETE 被拒絕（AC-11）；(c) `mode = 'FAIR'` 時結束丟出 409 `RANKING_UNAVAILABLE`，活動仍為 `OPEN` 且沒有結果（FR-002、FR-007）；(d) `readResults` 回傳 data-model.md 的 `ResultView`：`label` 為 `Q:<題號>`／`G:<題組代號>`、`noAnswer`、`entries` 依 `rank` 排序並含 `groupName`、`acceptedOrder`（單位內 `accept_seq` 名次）、`acceptedAt`、`rank`、`isWinner`、依 `position_in_unit` 排列的 `answers`，且不含組別 ID、受理序號、受理識別；(e) 未結束時 409 `INVALID_PHASE`，有受理缺結果時 409 `RESULTS_UNAVAILABLE`
-- [ ] T004 [P] 在 `tests/unit/results-export/backfill.test.js` 測試 migration 補齊：把 `src/db/migrations/` 中 `004-` 以外的檔案複製到暫存目錄並 `migrate(db, { dir })`，以 fixtures 建立「已結束、速度模式、有受理、沒有結果」的活動，另建一個已結束的公平模式活動，再以預設目錄 `migrate(db)`；速度模式活動依 `accept_seq` 補齊 `final_rank` 與 `is_winner`，公平模式活動維持沒有結果
+- [X] T002 [P] 在 `tests/unit/results-export/ranking.test.js` 為 `rankSpeed` 寫測試：每個單位依 `acceptSeq` 由小到大給 `finalRank` 1、2、3…；沒有受理的單位不產生資料；同一組在不同單位各自排名；回傳 `{ submissionId, unitId, finalRank }`（[contracts/ranking.md](contracts/ranking.md)）
+- [X] T003 [P] 在 `tests/unit/results-export/results.test.js` 以 `tests/helpers/fixtures.js` 與 SF-03 的 `transitionActivity` 寫測試：(a) 結束時同交易保存結果——單題 A 組 `final_rank` 1、B 組 2，題組由 B 組勝出且每筆受理只有一列，無人作答單位沒有結果（AC-11）；(b) `results` 的 UPDATE、DELETE 被拒絕（AC-11）；(c) `mode = 'FAIR'` 時結束丟出 409 `RANKING_UNAVAILABLE`，活動仍為 `OPEN` 且沒有結果（FR-002、FR-007）；(d) `readResults` 回傳 data-model.md 的 `ResultView`：`label` 為 `Q:<題號>`／`G:<題組代號>`、`noAnswer`、`entries` 依 `rank` 排序並含 `groupName`、`acceptedOrder`（單位內 `accept_seq` 名次）、`acceptedAt`、`rank`、`isWinner`、依 `position_in_unit` 排列的 `answers`，且不含組別 ID、受理序號、受理識別；(e) 未結束時 409 `INVALID_PHASE`，有受理缺結果時 409 `RESULTS_UNAVAILABLE`
+- [X] T004 [P] 在 `tests/unit/results-export/backfill.test.js` 測試 migration 補齊：把 `src/db/migrations/` 中 `004-` 以外的檔案複製到暫存目錄並 `migrate(db, { dir })`，以 fixtures 建立「已結束、速度模式、有受理、沒有結果」的活動，另建一個已結束的公平模式活動，再以預設目錄 `migrate(db)`；速度模式活動依 `accept_seq` 補齊 `final_rank` 與 `is_winner`，公平模式活動維持沒有結果
 
 ### Implementation
 
-- [ ] T005 [P] 在 `src/features/results-export/ranking.js` 實作同步純函式 `rankSpeed(units)` 與 `export const RANKERS = Object.freeze({ SPEED: rankSpeed })`
-- [ ] T006 在 `src/features/results-export/results.js` 實作 `saveFinalResults(db, activityId, mode)`：依 `units.position` 讀取各單位，受理依 `accept_seq` 排列為 `{ submissionId, groupId, acceptSeq }`；`RANKERS[mode]` 不存在時丟出 `conflict('RANKING_UNAVAILABLE', '這個模式的結果計算尚未提供，無法結束活動。')`；以 `INSERT INTO results (submission_id, unit_id, final_rank, is_winner)` 寫入，`is_winner = finalRank === 1 ? 1 : 0`。函式在呼叫端的交易內執行，不自行開交易、不 `await`
-- [ ] T007 在 `src/features/realtime-buzzer/state.js` 的結束分支，於 `UPDATE ... status = 'CLOSED'` 之後呼叫 `saveFinalResults(db, id, activity.mode)`，取代 SF-04 的註解
-- [ ] T008 在 `src/features/results-export/results.js` 實作 `readResults(db, activityId)`：`getActivity` 確認存在；非 `CLOSED` 時丟出 `conflict('INVALID_PHASE', '活動結束後才能查看結果。')`；依 data-model.md 組出 `ResultView`（`acceptedOrder` 以 `ROW_NUMBER() OVER (PARTITION BY unit_id ORDER BY accept_seq)` 計算）；有受理沒有結果列時丟出 `conflict('RESULTS_UNAVAILABLE', '這場活動沒有保存結果。')`
-- [ ] T009 建立 `src/db/migrations/004-01-backfill-speed-results.sql`：對 `status = 'CLOSED' AND mode = 'SPEED'` 且尚無任何 `results` 的活動，以 `ROW_NUMBER() OVER (PARTITION BY s.unit_id ORDER BY s.accept_seq)` 寫入 `final_rank`，`is_winner = (final_rank = 1)`（research R12）
-- [ ] T010 執行 `node --test tests/unit/results-export tests/unit/realtime-buzzer tests/integration/realtime-buzzer`，確認新測試通過且 SF-03 的結束流程不受影響
+- [X] T005 [P] 在 `src/features/results-export/ranking.js` 實作同步純函式 `rankSpeed(units)` 與 `export const RANKERS = Object.freeze({ SPEED: rankSpeed })`
+- [X] T006 在 `src/features/results-export/results.js` 實作 `saveFinalResults(db, activityId, mode)`：依 `units.position` 讀取各單位，受理依 `accept_seq` 排列為 `{ submissionId, groupId, acceptSeq }`；`RANKERS[mode]` 不存在時丟出 `conflict('RANKING_UNAVAILABLE', '這個模式的結果計算尚未提供，無法結束活動。')`；以 `INSERT INTO results (submission_id, unit_id, final_rank, is_winner)` 寫入，`is_winner = finalRank === 1 ? 1 : 0`。函式在呼叫端的交易內執行，不自行開交易、不 `await`
+- [X] T007 在 `src/features/realtime-buzzer/state.js` 的結束分支，於 `UPDATE ... status = 'CLOSED'` 之後呼叫 `saveFinalResults(db, id, activity.mode)`，取代 SF-04 的註解
+- [X] T008 在 `src/features/results-export/results.js` 實作 `readResults(db, activityId)`：`getActivity` 確認存在；非 `CLOSED` 時丟出 `conflict('INVALID_PHASE', '活動結束後才能查看結果。')`；依 data-model.md 組出 `ResultView`（`acceptedOrder` 以 `ROW_NUMBER() OVER (PARTITION BY unit_id ORDER BY accept_seq)` 計算）；有受理沒有結果列時丟出 `conflict('RESULTS_UNAVAILABLE', '這場活動沒有保存結果。')`
+- [X] T009 建立 `src/db/migrations/004-01-backfill-speed-results.sql`：對 `status = 'CLOSED' AND mode = 'SPEED'` 且尚無任何 `results` 的活動，以 `ROW_NUMBER() OVER (PARTITION BY s.unit_id ORDER BY s.accept_seq)` 寫入 `final_rank`，`is_winner = (final_rank = 1)`（research R12）
+- [X] T010 執行 `node --test tests/unit/results-export tests/unit/realtime-buzzer tests/integration/realtime-buzzer`，確認新測試通過且 SF-03 的結束流程不受影響
 
 **Checkpoint**: 結束活動即保存結果，`readResults` 可提供結果檢視
 
