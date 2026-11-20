@@ -1,6 +1,6 @@
 @startuml
 skinparam shadowing false
-title SF-01 登入、加入與重連
+title SF-01 登入、加入、重連與退出
 actor 教師
 actor 學生
 participant API
@@ -24,4 +24,9 @@ end
 學生 -> API : 重新載入（原 Cookie）
 API -> SQLite : 讀回本人活動與組別
 API --> 學生 : 本人工作階段
+opt 學生確認退出準備中的活動
+學生 -> API : 以組別 Cookie 與 CSRF 送出退出
+API -> SQLite : 交易內驗證組別與階段，刪除本人組別及工作階段
+API --> 學生 : 清除組別 Cookie，發放新加入 Cookie 及 CSRF
+end
 @enduml

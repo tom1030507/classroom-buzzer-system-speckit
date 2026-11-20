@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { startServer } from '../../../src/server.js';
 import { silentLogger } from '../../../src/lib/logger.js';
 import { browser } from '../../helpers/browser.js';
-import { openActivity } from '../../helpers/fixtures.js';
+import { closeActivity, insertActivity, openActivity } from '../../helpers/fixtures.js';
 import { startTestApp } from '../../helpers/test-app.js';
 
 const password = 'teacher-test-passphrase';
@@ -162,4 +162,83 @@ test('the original browser can retry a join whose session cookie was lost', asyn
   assert.equal(first.headers.getSetCookie()[0].split(';')[0], retry.headers.getSetCookie()[0].split(';')[0]);
   assert.equal((await join('Different name')).status, 409);
   assert.equal(app.db.prepare('SELECT count(*) AS n FROM student_groups').get().n, 1);
+});
+
+async function joinAsStudent(app, joinCode, name) {
+  const student = browser(app, 'student');
+  await student.request('session');
+  const response = await student.request('join', { method: 'POST', body: { joinCode, name } });
+  assert.equal(response.status, 201);
+  return student;
+}
+
+test('leaving preparation removes only the current group and lets the same browser join elsewhere', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teacher = await login(app);
+  const initial = (await teacher.request('activities', { method: 'POST' })).data.activity;
+  const next = (await teacher.request('activities', { method: 'POST' })).data.activity;
+  const leaving = await joinAsStudent(app, initial.joinCode, 'Leaving group');
+  const staying = await joinAsStudent(app, initial.joinCode, 'Staying group');
+  const previous = await leaving.request('session');
+  const stale = browser(app, 'student');
+  stale.cookies.set('buzzer_group', leaving.cookies.get('buzzer_group'));
+  leaving.cookies.set('buzzer_group_bootstrap', 'A'.repeat(43));
+
+  const left = await leaving.request('leave', { method: 'POST' });
+  assert.equal(left.status, 200);
+  assert.equal(left.data.group, null);
+  assert.equal(left.data.activity, null);
+  assert.match(left.data.csrfToken, /^[A-Za-z0-9_-]{43}$/);
+  assert.notEqual(left.data.csrfToken, previous.data.csrfToken);
+  assert.equal(leaving.cookies.has('buzzer_group'), false);
+  assert.notEqual(leaving.cookies.get('buzzer_group_bootstrap'), 'A'.repeat(43));
+  assert.equal((await stale.request('session')).data.group, null);
+  assert.equal((await stale.request('leave', { method: 'POST' })).status, 401);
+  assert.equal(app.db.prepare('SELECT count(*) AS n FROM group_sessions').get().n, 1);
+  const roster = (await teacher.request(`activities/${initial.id}`)).data.groups;
+  assert.deepEqual(roster.map(({ name }) => name), ['Staying group']);
+  assert.equal((await staying.request('session')).data.group.name, 'Staying group');
+
+  const rejoined = await leaving.request('join', {
+    method: 'POST', body: { joinCode: next.joinCode, name: 'Leaving group' },
+  });
+  assert.equal(rejoined.status, 201);
+  assert.equal(rejoined.data.activity.id, next.id);
+});
+
+test('leaving requires the active group Cookie, same Origin and its CSRF token', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  insertActivity(app.db, { joinCode: 'AUTHJOIN' });
+  const student = await joinAsStudent(app, 'AUTHJOIN', 'Authorized group');
+  const anonymous = browser(app, 'student');
+  await anonymous.request('session');
+
+  assert.equal((await anonymous.request('leave', { method: 'POST' })).data.error.code, 'GROUP_REQUIRED');
+  assert.equal((await student.request('leave', {
+    method: 'POST', headers: { Origin: 'http://example.test' },
+  })).data.error.code, 'INVALID_ORIGIN');
+  assert.equal((await student.request('leave', {
+    method: 'POST', headers: { 'X-CSRF-Token': '' },
+  })).data.error.code, 'INVALID_CSRF');
+  assert.equal((await student.request('session')).data.group.name, 'Authorized group');
+});
+
+test('leaving rejects a stale preparation page after the activity opens or closes', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const activityId = insertActivity(app.db, { joinCode: 'PHASEJOIN' });
+  const student = await joinAsStudent(app, 'PHASEJOIN', 'Phase group');
+  const phases = [[openActivity, 'OPEN'], [closeActivity, 'CLOSED']];
+  for (const [advance, status] of phases) {
+    advance(app.db, activityId);
+    const response = await student.request('leave', { method: 'POST' });
+    assert.equal(response.status, 409);
+    assert.equal(response.data.error.code, 'INVALID_PHASE');
+    const session = (await student.request('session')).data;
+    assert.equal(session.group.name, 'Phase group');
+    assert.equal(session.activity.status, status);
+  }
 });
