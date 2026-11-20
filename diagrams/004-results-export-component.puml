@@ -12,6 +12,7 @@ package "瀏覽器：HTML／CSS／原生 JavaScript" {
   package "SF-04（本功能）" #E8F4FF {
     [教師結果與匯出\npublic/teacher/results-export.js\n結果表・寫回預覽與確認・下載 CSV] as TeacherResults
     [學生結果\npublic/student/results-export.js] as StudentResults
+    [共用結果表\npublic/js/results-view.js] as ResultsView
   }
   package "沿用" {
     [SF-03 即時搶答頁面\npublic/teacher/realtime-buzzer.js\npublic/student/realtime-buzzer.js\n（發出 teacher-activity-phase、\nstudent-activity-closed 事件）] as BuzzerUI
@@ -26,7 +27,7 @@ node "Node.js 伺服器（只綁定 127.0.0.1）" {
     [ranking.js\nrankSpeed・RANKERS\n（SF-05 加入 FAIR）] as Ranking
     [csv.js\nbuildResultsCsv] as Csv
     [sheets-export.js\npreviewExport・runExport\nclassifyTarget・同活動互斥] as Export
-    [export-records.js\n逐題匯出紀錄] as Records
+    [export-records.js\n逐題寫回紀錄] as Records
   }
   package "沿用其他子功能" {
     [SF-01 activity-groups/sessions.js\nrequireTeacher・requireGroupSession\nrequireMutation] as Sessions
@@ -47,6 +48,9 @@ Teacher --> TeacherResults
 Student --> StudentResults
 TeacherResults ..> BuzzerUI : 監聽階段事件
 StudentResults ..> BuzzerUI : 監聽結束事件
+TeacherResults ..> ResultsView
+StudentResults ..> ResultsView
+ResultsView ..> WebShared
 TeacherResults ..> WebShared
 StudentResults ..> WebShared
 TeacherResults --> Router : GET 結果・POST 寫回預覽／寫回\nGET 寫回紀錄・GET results.csv
