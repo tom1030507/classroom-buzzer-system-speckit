@@ -84,16 +84,37 @@ export function rankFair(units)
 
 ### V5　只有一組送出
 
-三個單位都只有 A 送出：每個單位 A 都是第 1 名，輸出三筆 `finalRank = 1`。
+| 單位 | 輸入 | 說明 |
+| --- | --- | --- |
+| U1 | s(11, A, 1) | A 第 1（A 勝出 1 次） |
+| U2 | s(21, A, 2) | 只有 A 送出，仍是第 1（A 勝出 2 次） |
+| U3 | s(31, A, 3) | 仍是第 1（A 勝出 3 次） |
+
+輸出：U1 `[11→1]`；U2 `[21→1]`；U3 `[31→1]`。
 
 ### V6　依輸入順序而非 `unitId` 處理
 
-把 V1 的兩個單位以相反順序輸入（先 U2、後 U1）：U2 先處理，A（序號 3）勝出；U1 再處理，A 已勝出 1 次，
-所以 B（序號 2）第 1、A（序號 1）第 2。證明單位順序來自陣列順序（呼叫端負責依 `units.position` 排列）。
+把 V1 的兩個單位以相反順序輸入：陣列為 `[U2, U1]`，其中 U2 為 s(21, A, 3)、s(22, B, 4)，U1 為 s(11, A, 1)、s(12, B, 2)。
 
-### V7　空輸入
+| 處理順序 | 輸入 | 說明 |
+| --- | --- | --- |
+| 先 U2 | s(21, A, 3)、s(22, B, 4) | 勝出次數都是 0，依受理序號：A 第 1（A 勝出 1 次）、B 第 2 |
+| 後 U1 | s(11, A, 1)、s(12, B, 2) | A 已勝出 1 次、B 為 0 次：B 第 1、A 第 2 |
 
-`rankFair([])` 回傳 `[]`；全部單位都沒有送出時也回傳 `[]`。
+輸出（依陣列順序串接）：U2 `[21→1, 22→2]`；U1 `[12→1, 11→2]`。證明單位順序來自陣列順序，而不是 `unitId` 的大小
+（呼叫端負責依 `units.position` 排列）。
+
+### V7　空輸入與全部無人送出
+
+- `rankFair([])` 回傳 `[]`。
+- `rankFair([{ unitId: 1, submissions: [] }, { unitId: 2, submissions: [] }])` 回傳 `[]`。
+
+### 如何比對輸出
+
+各向量的輸出都依單位順序串接成單一陣列，每個元素是 `{ submissionId, unitId, finalRank }`。例如 V1 的完整輸出為
+`[{ submissionId: 11, unitId: 1, finalRank: 1 }, { submissionId: 12, unitId: 1, finalRank: 2 },
+{ submissionId: 22, unitId: 2, finalRank: 1 }, { submissionId: 21, unitId: 2, finalRank: 2 }]`；測試以
+`assert.deepEqual` 比對，不依賴物件欄位的順序。
 
 ## 呼叫端責任
 

@@ -27,7 +27,7 @@
 
 **Project Type**: Web 應用（Express API＋SSE＋靜態前端），單一 repository
 
-**Performance Goals**: 本機 1 位老師、10 組、20 題：結束後 2 秒內顯示結果；改選模式後 2 秒內各畫面更新。公平順位計算為 O(單位數 × 受理數 log 受理數)，遠小於 1 毫秒量級
+**Performance Goals**: 本機 1 位老師、10 組、20 題：結束後 2 秒內顯示結果；改選模式後 2 秒內各畫面更新。公平順位計算為 O(單位數 × 受理數 log 受理數)，在結束交易內同步執行
 
 **Constraints**: `rankFair` 是同步純函式，在結束交易內執行，不得讀寫資料庫或 `await`；模式更新與開啟、結束都走 `withTransaction`，由同一序列處理
 
@@ -88,6 +88,10 @@
 | `public/js/results-view.js`、`public/teacher/results-export.js` | SF-04 | 結果頁顯示規則說明；寫回預覽與紀錄標示模式；`modeLabel` 改由 `mode-rules.js` 提供並由原模組轉出 |
 | `public/teacher/index.html`、`public/student/index.html` | 共用 | 新增 `#mode-select`、`#student-mode` 區塊與模組 |
 | `tests/unit/results-export/results.test.js` | SF-04 | 「公平模式無法結束」的測試改為「公平模式結束時保存公平順位」，並以直接呼叫驗證未登錄模式的防護 |
+| `public/css/base.css` | 共用 | 必要時補 `.mode-rule` 與單選群組的間距樣式 |
+| `specs/004-results-export/acceptance.md`、`quickstart.md`、`contracts/http-api.md` | SF-04（文件） | 移除「公平模式在 SF-05 完成前無法結束」的過時敘述 |
+| `README.md` | 共用 | 「已實作」段落與分工表（SF-05 列、SF-04 審閱者） |
+| `diagrams/system-component.puml` | 共用 | 實作後同步 SF-05 與 SF-04 的依賴方向（`/speckit-plantuml-sync`） |
 
 ## Project Structure
 
@@ -107,7 +111,8 @@ specs/005-fair-ranking/
 │   └── requirements.md  # 規格品質檢查
 ├── tasks.md             # Phase 2（/speckit-tasks）
 ├── diagram-sync.md      # 實作後（/speckit-plantuml-sync）
-└── acceptance.md        # 驗收紀錄
+├── acceptance.md        # 驗收紀錄
+└── evidence/            # 畫面驗證的截圖
 ```
 
 ### Source Code (repository root)
@@ -123,6 +128,7 @@ src/
     └── results-export/ranking.js            # 註冊 FAIR
 
 public/
+├── css/base.css                             # 必要時補模式說明與單選群組的樣式
 ├── js/
 │   ├── mode-rules.js                        # 模式名稱與規則說明（固定文字）
 │   └── results-view.js                      # 結果頁顯示規則說明
