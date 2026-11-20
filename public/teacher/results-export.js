@@ -41,6 +41,9 @@ const csvSection = h('p', { hidden: true }, csvLink, '（UTF-8，含所有組的
 
 let current;
 
+/** "公平模式・" in front of the write-back texts, so the mode is stated next to the winners it writes (FR-013). */
+const modeNote = (state) => (state?.mode ? `${modeLabel[state.mode] ?? state.mode}・` : '');
+
 panel.setAttribute('aria-labelledby', heading.id);
 panel.append(heading, summary, feedback, h('div', { class: 'actions' }, retry), csvSection, results, exportSection);
 
@@ -96,7 +99,7 @@ function refreshExportControls(state) {
 function renderPreview(state, preview) {
   state.preview = preview;
   const { READY, ALREADY_PRESENT, CONFLICT, NO_ANSWER } = preview.counts;
-  setText(previewSummary, `共 ${preview.items.length} 題：可寫入 ${READY}、已是相同內容 ${ALREADY_PRESENT}、衝突 ${CONFLICT}、無人作答 ${NO_ANSWER}。`
+  setText(previewSummary, `${modeNote(state)}共 ${preview.items.length} 題：可寫入 ${READY}、已是相同內容 ${ALREADY_PRESENT}、衝突 ${CONFLICT}、無人作答 ${NO_ANSWER}。`
     + (READY + ALREADY_PRESENT + CONFLICT === 0 ? '沒有需要寫回的勝出答案。' : ''));
   previewSummary.hidden = false;
   conflictWarning.hidden = CONFLICT === 0;
@@ -124,7 +127,7 @@ function renderRecord(record) {
   const [text, tone] = outcomeText[record.outcome];
   const time = record.finishedAt ? `（${new Date(record.finishedAt).toLocaleString('zh-TW', { hourCycle: 'h23' })}）` : '';
   recordSummary.className = `status ${tone}`;
-  setText(recordSummary, `最近一次寫回${time}：${text}${record.error ? `原因：${record.error.message}` : ''}`);
+  setText(recordSummary, `${modeNote(current)}最近一次寫回${time}：${text}${record.error ? `原因：${record.error.message}` : ''}`);
   recordSummary.hidden = false;
   const counts = Object.entries(record.counts).filter(([, count]) => count > 0)
     .map(([status, count]) => `${recordLabel[status]} ${count}`).join('、');
@@ -204,6 +207,7 @@ async function load(state) {
     const view = await apiFetch(`${state.baseUrl}/results`, { signal: state.controller.signal });
     if (current !== state) return;
     state.loaded = true;
+    state.mode = view.activity.mode;
     setText(summary, `活動已結束・${modeLabel[view.activity.mode] ?? view.activity.mode}。結果已固定，不能再修改。`);
     results.replaceChildren(...renderResults(view));
     csvLink.href = `${state.baseUrl}/results.csv`;

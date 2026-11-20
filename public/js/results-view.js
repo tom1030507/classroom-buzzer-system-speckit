@@ -1,10 +1,13 @@
 /**
- * Renders the fixed results (SF-04 ResultView) for both the teacher and the student pages.
- * Group names and answers are user input, so they only ever become text nodes (dom.js).
+ * Renders the fixed results (SF-04 ResultView) for both the teacher and the student pages, led by the
+ * rule description of the activity's mode (SF-05). Group names and answers are user input, so they
+ * only ever become text nodes (dom.js).
  */
 import { h } from '/js/dom.js';
+import { modeLabel, renderModeRule } from '/js/mode-rules.js';
 
-export const modeLabel = Object.freeze({ SPEED: '速度模式', FAIR: '公平模式' });
+// The names moved to mode-rules.js (SF-05); the result modules still import modeLabel from here.
+export { modeLabel };
 
 const timeFormat = new Intl.DateTimeFormat('zh-TW', {
   hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hourCycle: 'h23',
@@ -48,7 +51,13 @@ function unitSection(unit, mode, idPrefix) {
   );
 }
 
-/** @returns {HTMLElement[]} one section per unit, in the fixed unit order */
+/**
+ * @returns {HTMLElement[]} the rule description of the activity's mode (both modes show theirs, FR-010;
+ *   the fair-mode text carries a short example, FR-014), then one section per unit in the fixed unit order
+ */
 export function renderResults(view, { idPrefix = 'results-unit' } = {}) {
-  return view.units.map((unit) => unitSection(unit, view.activity.mode, idPrefix));
+  return [
+    renderModeRule(view.activity.mode),
+    ...view.units.map((unit) => unitSection(unit, view.activity.mode, idPrefix)),
+  ];
 }

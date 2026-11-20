@@ -100,9 +100,9 @@ description: "SF-05 公平排序的任務清單"
 
 ### Implementation for User Story 3
 
-- [ ] T018 [P] [US3] 在 `public/js/results-view.js` 自 `/js/mode-rules.js` 匯入 `modeLabel`、`renderModeRule`，並以 `export { modeLabel }` 轉出（教師與學生結果模組既有的 `import { modeLabel, renderResults } from '/js/results-view.js'` 不需修改）；`renderResults(view, options)` 回傳陣列的第一個元素改為 `renderModeRule(view.activity.mode)`，其後才是各單位的 section；更新檔頭註解與 JSDoc 的回傳說明。兩種模式都顯示規則說明；表格欄位「最終順位」「受理順序」維持不變，不新增勝出次數欄（FR-010、FR-014，Clarification）
-- [ ] T019 [P] [US3] 在 `public/teacher/results-export.js` 讓寫回預覽摘要（`previewSummary`）與最近一次寫回紀錄摘要（`recordSummary`）的文字開頭標示活動模式，例如「公平模式・共 3 題：可寫入 3、…」：載入結果時把 `view.activity.mode` 存入模組狀態，兩處文字以 `modeLabel` 組成；其餘寫回流程不變（FR-013）
-- [ ] T020 [US3] 執行 `node --test 'tests/integration/fair-ranking/*.test.js' 'tests/integration/results-export/*.test.js' 'tests/unit/results-export/*.test.js'`，確認 US3 測試通過，SF-04 的速度模式行為不變
+- [X] T018 [P] [US3] 在 `public/js/results-view.js` 自 `/js/mode-rules.js` 匯入 `modeLabel`、`renderModeRule`，並以 `export { modeLabel }` 轉出（教師與學生結果模組既有的 `import { modeLabel, renderResults } from '/js/results-view.js'` 不需修改）；`renderResults(view, options)` 回傳陣列的第一個元素改為 `renderModeRule(view.activity.mode)`，其後才是各單位的 section；更新檔頭註解與 JSDoc 的回傳說明。兩種模式都顯示規則說明；表格欄位「最終順位」「受理順序」維持不變，不新增勝出次數欄（FR-010、FR-014，Clarification）
+- [X] T019 [P] [US3] 在 `public/teacher/results-export.js` 讓寫回預覽摘要（`previewSummary`）與最近一次寫回紀錄摘要（`recordSummary`）的文字開頭標示活動模式，例如「公平模式・共 3 題：可寫入 3、…」：載入結果時把 `view.activity.mode` 存入模組狀態，兩處文字以 `modeLabel` 組成；其餘寫回流程不變（FR-013）
+- [X] T020 [US3] 執行 `node --test 'tests/integration/fair-ranking/*.test.js' 'tests/integration/results-export/*.test.js' 'tests/unit/results-export/*.test.js'`，確認 US3 測試通過，SF-04 的速度模式行為不變
 
 **Checkpoint**: 三個 user story 都可獨立運作
 
