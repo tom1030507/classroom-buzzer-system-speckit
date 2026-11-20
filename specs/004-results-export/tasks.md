@@ -114,14 +114,14 @@ description: "SF-04 結果與匯出的任務清單"
 
 ### Tests for User Story 3（先寫並確認失敗）
 
-- [ ] T028 [P] [US3] 在 `tests/unit/results-export/csv.test.js` 為 `buildResultsCsv` 寫測試：以 `﻿` 開頭、CRLF 分隔且結尾有 CRLF；標題列為 `activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner`；依單位順序、最終順位、組內題序展開；無人作答題一列且 `group_name`、`answer`、`accepted_at`、`accepted_order`、`rank` 為空、`is_winner` 為 `false`；含 `,`、`"`、CR、LF 的欄位加雙引號並把 `"` 重複；`unit_id`、`question_id`、`group_name`、`answer` 去除前導空白後以 `=`、`+`、`-`、`@` 開頭或以 tab、CR、LF 開頭時前面加 `'`，一般文字不加（AC-19、AC-20）
-- [ ] T029 [P] [US3] 在 `tests/integration/results-export/results-export.test.js` 測試 `GET /api/teacher/activities/:id/results.csv`：結束後 200，`Content-Type: text/csv; charset=utf-8`、`Content-Disposition` 為 `attachment; filename="results-<activityId>.csv"`，內容與結果一致；結束前 409；學生 401；下載後資料庫中的答案原值不變
+- [X] T028 [P] [US3] 在 `tests/unit/results-export/csv.test.js` 為 `buildResultsCsv` 寫測試：以 `﻿` 開頭、CRLF 分隔且結尾有 CRLF；標題列為 `activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner`；依單位順序、最終順位、組內題序展開；無人作答題一列且 `group_name`、`answer`、`accepted_at`、`accepted_order`、`rank` 為空、`is_winner` 為 `false`；含 `,`、`"`、CR、LF 的欄位加雙引號並把 `"` 重複；`unit_id`、`question_id`、`group_name`、`answer` 去除前導空白後以 `=`、`+`、`-`、`@` 開頭或以 tab、CR、LF 開頭時前面加 `'`，一般文字不加（AC-19、AC-20）
+- [X] T029 [P] [US3] 在 `tests/integration/results-export/results-export.test.js` 測試 `GET /api/teacher/activities/:id/results.csv`：結束後 200，`Content-Type: text/csv; charset=utf-8`、`Content-Disposition` 為 `attachment; filename="results-<activityId>.csv"`，內容與結果一致；結束前 409；學生 401；下載後資料庫中的答案原值不變
 
 ### Implementation for User Story 3
 
-- [ ] T030 [US3] 在 `src/features/results-export/csv.js` 實作 `buildResultsCsv(view)`（research R11）
-- [ ] T031 [US3] 在 `src/features/results-export/router.js` 新增 `GET /teacher/activities/:activityId/results.csv`（`requireTeacher`）
-- [ ] T032 [US3] 在 `public/teacher/results-export.js` 的結果區加入「下載 CSV」連結（`href` 指向 CSV 端點、`download` 屬性）
+- [X] T030 [US3] 在 `src/features/results-export/csv.js` 實作 `buildResultsCsv(view)`（research R11）
+- [X] T031 [US3] 在 `src/features/results-export/router.js` 新增 `GET /teacher/activities/:activityId/results.csv`（`requireTeacher`）
+- [X] T032 [US3] 在 `public/teacher/results-export.js` 的結果區加入「下載 CSV」連結（`href` 指向 CSV 端點、`download` 屬性）
 
 **Checkpoint**: 三個 user story 都可獨立運作
 

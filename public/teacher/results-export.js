@@ -35,10 +35,14 @@ const exportSection = h('section', { 'aria-labelledby': 'sheets-export-heading',
   recordSummary, recordCounts, recordTable, resumeReminder,
 );
 
+// ── CSV download (FR-09) ─────────────────────────────────────────────────────────
+const csvLink = h('a', { download: '' }, '下載 CSV');
+const csvSection = h('p', { hidden: true }, csvLink, '（UTF-8，含所有組的受理答案與無人作答的題目）');
+
 let current;
 
 panel.setAttribute('aria-labelledby', heading.id);
-panel.append(heading, summary, feedback, h('div', { class: 'actions' }, retry), results, exportSection);
+panel.append(heading, summary, feedback, h('div', { class: 'actions' }, retry), csvSection, results, exportSection);
 
 const previewLabel = Object.freeze({
   READY: '可寫入', ALREADY_PRESENT: '已是相同內容', CONFLICT: '衝突', NO_ANSWER: '無人作答，不寫入',
@@ -202,6 +206,8 @@ async function load(state) {
     state.loaded = true;
     setText(summary, `活動已結束・${modeLabel[view.activity.mode] ?? view.activity.mode}。結果已固定，不能再修改。`);
     results.replaceChildren(...renderResults(view));
+    csvLink.href = `${state.baseUrl}/results.csv`;
+    csvSection.hidden = false;
     exportSection.hidden = false;
     refreshExportControls(state);
     void loadLatestExport(state);
@@ -238,6 +244,7 @@ document.addEventListener('teacher-activity', ({ detail: activity }) => {
   results.replaceChildren();
   setText(summary, '');
   showError('');
+  csvSection.hidden = true;
   exportSection.hidden = true;
   showExportError('');
   showProgress('');
