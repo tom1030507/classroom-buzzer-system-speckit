@@ -124,7 +124,7 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 | SF-02 線上題目匯入 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | [#25](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25#pullrequestreview-5980074666) | [驗收](specs/002-sheets-import/acceptance.md) |
 | SF-03 即時搶答 | tom1030507 | [#9](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/9) | [#26](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/26) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/26#pullrequestreview-5980075044) | [驗收](specs/003-realtime-buzzer/acceptance.md) |
 | SF-04 結果與匯出 | 45678XYZ | [#13](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/13) | [#29](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/29) | [tom1030507](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/29#pullrequestreview-5988427557) | [驗收](specs/004-results-export/acceptance.md) |
-| SF-05 公平排序 | 45678XYZ | [#17](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/17) | — | — | [驗收](specs/005-fair-ranking/acceptance.md) |
+| SF-05 公平排序 | 45678XYZ | [#17](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/17) | [#31](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/31) | — | [驗收](specs/005-fair-ranking/acceptance.md) |
 
 ## 系統圖表
 
