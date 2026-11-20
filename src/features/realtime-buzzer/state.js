@@ -2,6 +2,7 @@ import { withTransaction } from '../../db/transaction.js';
 import { conflict } from '../../lib/errors.js';
 import { nowIso } from '../../lib/time.js';
 import { getActivity } from '../activity-groups/activities.js';
+import { saveFinalResults } from '../results-export/results.js';
 import { confirmedImportSnapshot } from '../sheets-import/units.js';
 
 export function transitionActivity({ db, clock }, id, target, expectedImportRevision) {
@@ -23,7 +24,7 @@ export function transitionActivity({ db, clock }, id, target, expectedImportRevi
       db.prepare("UPDATE activities SET status = 'OPEN', opened_at = ? WHERE id = ?").run(time, id);
     } else {
       db.prepare("UPDATE activities SET status = 'CLOSED', closed_at = ? WHERE id = ?").run(time, id);
-      // SF-04 (#14) persists results here, after CLOSED and before this transaction commits.
+      saveFinalResults(db, id, activity.mode);
     }
     return { id, mode: activity.mode, status: target };
   });
