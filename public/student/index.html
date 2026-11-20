@@ -14,6 +14,7 @@
       </header>
       <main id="app">
         <p id="student-status" class="status" role="status">正在載入組別工作階段…</p>
+        <button id="student-leave" type="button" hidden>退出目前活動</button>
         <form id="student-join" hidden>
           <label for="student-join-code">活動加入碼</label>
           <input id="student-join-code" autocomplete="off" required />
@@ -21,8 +22,12 @@
           <input id="student-name" autocomplete="off" required />
           <button type="submit">加入活動</button>
         </form>
+        <section id="student-buzzer" hidden></section>
+        <section id="student-results" hidden></section>
       </main>
     </div>
+    <script type="module" src="/student/realtime-buzzer.js"></script>
+    <script type="module" src="/student/results-export.js"></script>
     <script type="module" src="/student/activity-groups.js"></script>
   </body>
 </html>

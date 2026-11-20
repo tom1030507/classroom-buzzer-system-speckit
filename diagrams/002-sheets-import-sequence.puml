@@ -1,0 +1,31 @@
+@startuml 002-sheets-import-sequence
+skinparam shadowing false
+title SF-02 預覽與原子確認（AC-01、AC-03、AC-17）
+actor 教師
+participant 教師頁 as UI
+participant "匯入 API" as API
+participant "Google Sheets Gateway" as Gateway
+participant "Google Sheets API" as Sheets
+database SQLite
+教師 -> UI : 輸入雲端試算表
+UI -> API : POST import/sheets
+API -> API : 教師、Origin、CSRF、PREPARING
+API -> Gateway : listSheets
+Gateway -> Sheets : 讀工作表清單
+API --> UI : 可選工作表
+教師 -> UI : 選擇並排序工作表
+UI -> API : POST import/preview
+API -> API : 教師、Origin、CSRF、PREPARING
+API -> Gateway : readSheets（依 sheetId）
+Gateway -> Sheets : 讀格值與合併範圍
+API -> API : 解析標記並暫存有效預覽
+API --> UI : 預覽 ID、題號、單位、格位
+教師 -> UI : 確認
+UI -> API : POST import/confirm
+API -> API : 驗證教師、Origin、CSRF 與預覽歸屬
+group 單一 SQLite 交易
+  API -> SQLite : 檢查 PREPARING
+  API -> SQLite : 取代 units、questions
+end
+API --> UI : 已確認匯入
+@enduml

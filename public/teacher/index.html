@@ -29,10 +29,16 @@
             <h2>已加入的組別</h2>
             <button id="refresh-groups" type="button">重新載入組別</button>
             <ul id="teacher-groups"></ul>
+            <section id="sheets-import" hidden></section>
+            <section id="teacher-buzzer" hidden></section>
+            <section id="results-export" hidden></section>
           </section>
         </section>
       </main>
     </div>
+    <script type="module" src="/teacher/sheets-import.js"></script>
+    <script type="module" src="/teacher/realtime-buzzer.js"></script>
+    <script type="module" src="/teacher/results-export.js"></script>
     <script type="module" src="/teacher/activity-groups.js"></script>
   </body>
 </html>

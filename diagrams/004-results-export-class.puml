@@ -1,0 +1,196 @@
+@startuml 004-results-export-class
+title SF-04 結果與匯出 — Class（spec.md §6 Result、Export；FR-06、FR-07、FR-09）
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 260
+hide empty methods
+
+package "沿用的資料表（000-base-schema）" {
+  class Activity <<activities>> {
+    id : TEXT <<PK>>
+    mode : SPEED | FAIR
+    status : PREPARING | OPEN | CLOSED
+    closed_at : UTC ISO 8601?
+  }
+  class Unit <<units>> {
+    id : INTEGER <<PK>>
+    kind : SINGLE | GROUP
+    group_code : TEXT?
+    position : INTEGER
+  }
+  class Question <<questions>> {
+    id : INTEGER <<PK>>
+    question_key : TEXT
+    position_in_unit : INTEGER
+    spreadsheet_id : TEXT
+    sheet_id : INTEGER
+    row_index : INTEGER
+    column_index : INTEGER
+    original_marker : TEXT
+  }
+  class StudentGroup <<student_groups>> {
+    id : INTEGER <<PK>>
+    name : TEXT
+  }
+  class Submission <<submissions>> {
+    id : INTEGER <<PK>>
+    accept_seq : INTEGER
+    accepted_at : UTC ISO 8601
+  }
+  class SubmissionAnswer <<submission_answers>> {
+    answer_text : TEXT
+  }
+}
+
+package "SF-04 擁有的資料（寫回紀錄由 004-02 新增）" #E8F4FF {
+  class Result <<results>> {
+    submission_id : INTEGER <<PK, FK>>
+    unit_id : INTEGER <<FK>>
+    final_rank : INTEGER
+    is_winner : BOOLEAN
+  }
+  class SheetExport <<sheet_exports>> {
+    id : INTEGER <<PK>>
+    activity_id : TEXT <<FK>>
+    started_at : UTC ISO 8601
+    finished_at : UTC ISO 8601?
+    outcome : ExportOutcome
+    error_code : TEXT?
+  }
+  class SheetExportItem <<sheet_export_items>> {
+    export_id : INTEGER <<PK, FK>>
+    question_id : INTEGER <<PK, FK>>
+    spreadsheet_id : TEXT
+    sheet_id : INTEGER
+    row_index : INTEGER
+    column_index : INTEGER
+    sheet_title : TEXT
+    content : TEXT
+    status : ExportItemStatus
+    reason : TEXT?
+  }
+  enum ExportOutcome {
+    RUNNING
+    SUCCEEDED
+    CONFLICT
+    FAILED
+    UNKNOWN（待核對）
+  }
+  enum ExportItemStatus {
+    PENDING
+    WRITTEN（成功）
+    ALREADY_PRESENT（已是相同內容）
+    CONFLICT（衝突）
+    SKIPPED（整批停止未寫入）
+    FAILED（失敗）
+    UNKNOWN（待核對）
+  }
+}
+
+package "src/features/results-export/" #E8F4FF {
+  class "results.js" as ResultsModule <<module>> {
+    +saveFinalResults(db, activityId, mode)
+    +readResults(db, activityId) : ResultView
+    +listWinningAnswers(db, activityId)
+  }
+  class "ranking.js" as RankingModule <<module>> {
+    +RANKERS : { SPEED }
+    +rankSpeed(units) : FinalRank[]
+  }
+  class "csv.js" as CsvModule <<module>> {
+    +buildResultsCsv(view) : string
+  }
+  class "sheets-export.js" as ExportModule <<module>> {
+    +createSheetsExporter(deps)
+    　preview(activityId)
+    　run(activityId, { editsPaused })
+    　latest(activityId)
+    +classifyTarget(target, { sheet, value })
+  }
+  class "export-records.js" as RecordsModule <<module>> {
+    +startRun(db, clock, activityId)
+    +recordItems(db, exportId, items)
+    +updateItems(db, exportId, updates)
+    +finishRun(db, clock, exportId, outcome, errorCode)
+    +abandonRun(db, clock, exportId, errorCode)
+    +readExport(db, exportId)
+    +latestExport(db, clock, activityId, isActive)
+  }
+  class ResultView <<view>> {
+    activity : { id, mode, status, closedAt }
+    units : UnitResult[]
+  }
+  class UnitResult <<view>> {
+    id : INTEGER
+    kind : SINGLE | GROUP
+    label : Q:題號 | G:題組代號
+    position : INTEGER
+    questions : { key }[]
+    noAnswer : boolean
+    entries : ResultEntry[]
+  }
+  class ResultEntry <<view>> {
+    groupName : TEXT
+    acceptedOrder : INTEGER
+    acceptedAt : UTC ISO 8601
+    rank : INTEGER
+    isWinner : boolean
+    answers : { questionKey, text }[]
+  }
+}
+
+class "sheets-import/gateway.js（SF-02；SF-04 擴充）" as GatewayModule <<module>> {
+  +readTargets(spreadsheetId, targets)
+  +writeCells(spreadsheetId, cells)
+}
+
+Activity "1" *-- "0..*" Unit
+Unit "1" *-- "1..*" Question
+Unit "1" -- "0..*" Submission
+StudentGroup "1" -- "0..*" Submission
+Submission "1" *-- "1..*" SubmissionAnswer
+SubmissionAnswer "0..*" --> "1" Question
+Submission "1" -- "0..1" Result : 結束時保存
+Activity "1" -- "0..*" SheetExport
+SheetExport "1" *-- "1..*" SheetExportItem
+SheetExportItem "0..*" --> "1" Question : 目標格
+SheetExport ..> ExportOutcome
+SheetExportItem ..> ExportItemStatus
+
+ResultView "1" *-- "0..*" UnitResult
+UnitResult "1" *-- "0..*" ResultEntry
+ResultsModule ..> RankingModule
+ResultsModule ..> Result : INSERT／SELECT
+ResultsModule ..> ResultView
+CsvModule ..> ResultView
+ExportModule ..> ResultsModule : listWinningAnswers
+ExportModule ..> GatewayModule
+ExportModule ..> RecordsModule
+RecordsModule ..> SheetExport
+RecordsModule ..> SheetExportItem
+
+note right of Result
+  final_rank 單位內唯一；is_winner = (final_rank = 1)。
+  只在 CLOSED 新增，之後不可修改或刪除（base trigger）。
+  速度模式：final_rank = 單位內受理順序。
+  實際受理順序取自 submissions.accept_seq。
+end note
+
+note bottom of SheetExport
+  同一活動最多一筆 RUNNING（部分唯一索引＋程序內互斥）。
+  RUNNING 若且唯若 finished_at 為 NULL（CHECK）。
+  中斷而遺留的 RUNNING，在下次讀取或寫回時改為 UNKNOWN，
+  其中尚未確認的 PENDING 題目也改為 UNKNOWN（待核對）。
+end note
+
+note bottom of SheetExportItem
+  只有勝出答案的題目才有紀錄；無人作答的格子不寫入。
+  只有全部題目都是 WRITTEN 或 ALREADY_PRESENT，
+  整批才是 SUCCEEDED。
+end note
+
+note right of UnitResult
+  CSV 每筆受理依題展開；無人作答題一列。
+  使用者輸入欄位有公式防護（加單引號）。
+end note
+@enduml

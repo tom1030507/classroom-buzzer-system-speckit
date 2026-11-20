@@ -1,0 +1,65 @@
+@startuml 004-results-export-sequence
+title SF-04 結果與匯出 — Sequence：結束時保存結果、查看結果與下載 CSV（FR-06、FR-09；AC-11、AC-15、AC-19、AC-20）
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam wrapWidth 300
+autonumber
+
+actor "老師" as Teacher
+participant "教師頁面\nrealtime-buzzer.js\nresults-export.js" as TeacherUI
+actor "學生（各組）" as Student
+participant "學生頁面\nrealtime-buzzer.js\nresults-export.js" as StudentUI
+participant "SF-03\nrouter.js・state.js" as Buzzer
+participant "SF-04\nrouter.js" as Router
+participant "results.js\nranking.js" as Results
+participant "csv.js" as Csv
+database "SQLite" as Db
+
+== 結束並保存結果（SF-03 結束交易中的 SF-04 接點） ==
+Teacher -> TeacherUI : 結束搶答（確認對話框）
+TeacherUI -> Buzzer : POST /api/teacher/activities/:id/close { confirm: true }
+Buzzer -> Buzzer : requireTeacher、requireMutation（Origin＋CSRF）
+group withTransaction（BEGIN IMMEDIATE；與送出同一序列）
+  Buzzer -> Db : 確認 status = OPEN；UPDATE status = CLOSED、closed_at
+  Buzzer -> Results : saveFinalResults(db, id, mode)
+  Results -> Db : 讀取各單位的受理（依 accept_seq）
+  Results -> Results : RANKERS[mode]：速度模式依受理順序排名；\n公平模式在 SF-05 前拒絕
+  Results -> Db : INSERT results（final_rank、is_winner）
+end
+alt 任一步失敗
+  Db --> Buzzer : ROLLBACK：活動仍為 OPEN，沒有部分結果
+  Buzzer --> TeacherUI : { error: { code, message } }
+else 成功
+  Db --> Buzzer : COMMIT：結束狀態與完整結果一起保存
+  Buzzer --> TeacherUI : { activity: { status: CLOSED } }
+end
+
+== 查看結果（老師與該活動的各組；結束後自動顯示） ==
+Buzzer --> TeacherUI : SSE snapshot（CLOSED）
+TeacherUI -> TeacherUI : teacher-activity-phase 事件
+TeacherUI -> Router : GET /api/teacher/activities/:id/results
+Router -> Router : requireTeacher；活動須為 CLOSED
+Router -> Results : readResults(db, id)
+Results -> Db : 單位、題目、受理、答案與 results
+Results --> Router : ResultView（模式、各單位順位、勝出組、無人作答）
+Router --> TeacherUI : 結果
+Buzzer --> StudentUI : SSE snapshot（CLOSED）
+StudentUI -> StudentUI : student-activity-closed 事件
+StudentUI -> Router : GET /api/student/results
+Router -> Router : requireGroupSession；所屬活動須為 CLOSED\n（結束前一律拒絕，不回傳其他組資料）
+Router -> Results : readResults(db, activityId)
+Router --> StudentUI : 同一份 ResultView
+note over TeacherUI, StudentUI
+  答案與組名只以 textContent 呈現。
+  重新整理頁面時，teacher-activity（已結束）與 student-activity-closed 事件同樣觸發載入。
+end note
+
+== 下載 CSV ==
+Teacher -> TeacherUI : 下載 CSV
+TeacherUI -> Router : GET /api/teacher/activities/:id/results.csv
+Router -> Router : requireTeacher；活動須為 CLOSED（學生一律拒絕）
+Router -> Results : readResults(db, id)
+Router -> Csv : buildResultsCsv(view)
+Csv -> Csv : 每筆受理依題展開；無人作答題一列；\n欄位轉義；使用者輸入欄位加公式防護
+Router --> TeacherUI : text/csv; charset=utf-8（UTF-8 BOM、CRLF）\nContent-Disposition: attachment; filename="results-<id>.csv"
+@enduml

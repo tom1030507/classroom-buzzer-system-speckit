@@ -16,12 +16,12 @@ export function createTestDatabase() {
  * Starts the real Express app on an ephemeral loopback port with an in-memory database.
  * The environment is isolated from the developer's shell (process.env is not read).
  *
- * @param {{ env?: Record<string, string>, clock?: ReturnType<typeof createFixedClock> }} [options]
+ * @param {{ env?: Record<string, string>, clock?: ReturnType<typeof createFixedClock>, sheetsGateway?: object }} [options]
  */
-export async function startTestApp({ env = {}, clock = createFixedClock() } = {}) {
+export async function startTestApp({ env = {}, clock = createFixedClock(), sheetsGateway } = {}) {
   const db = createTestDatabase();
   const config = loadConfig({ PORT: '0', DATABASE_FILE: ':memory:', ...env });
-  const app = createApp({ db, config, logger: silentLogger, clock });
+  const app = createApp({ db, config, logger: silentLogger, clock, sheetsGateway });
 
   const server = await new Promise((resolve, reject) => {
     const listening = app.listen(0, '127.0.0.1');

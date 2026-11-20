@@ -1,0 +1,27 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+title SF-03 即時搶答
+component "教師監看與控制" as Teacher
+component "學生作答與受理紀錄" as Student
+component "HTTP API 與 SSE" as HTTP
+component "教師快照\n含已確認匯入版本" as TeacherView
+component "學生快照" as StudentView
+component "原子受理及階段轉移" as Transaction
+component "SF-01 工作階段" as Session
+component "SF-02 匯入單位" as Unit
+component "SF-04 結果運算（接點）" as Results
+database SQLite as DB
+Teacher --> HTTP
+Student --> HTTP
+HTTP --> Session
+HTTP --> TeacherView
+HTTP --> StudentView
+HTTP --> Transaction
+TeacherView --> Unit
+StudentView --> Unit
+TeacherView --> DB
+StudentView --> DB : 僅本組
+Transaction --> DB
+Transaction ..> Results : 同交易
+@enduml
