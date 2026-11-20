@@ -7,6 +7,7 @@ import { createSheetsImportRouter } from './features/sheets-import/router.js';
 import { createSheetsGateway } from './features/sheets-import/gateway.js';
 import { createRealtimeBuzzerRouter } from './features/realtime-buzzer/router.js';
 import { createResultsExportRouter } from './features/results-export/router.js';
+import { createFairRankingRouter } from './features/fair-ranking/router.js';
 import { systemClock } from './lib/time.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
@@ -46,7 +47,7 @@ export function createApp({ db, config, logger, clock = systemClock, sheetsGatew
   api.use(createActivityGroupsRouter(deps));
   api.use(createSheetsImportRouter(deps));
   api.use(createResultsExportRouter(deps));
-  //   api.use(createFairRankingRouter(deps));      // SF-05 005-fair-ranking
+  api.use(createFairRankingRouter(deps));
 
   app.use('/api', api);
   app.use('/api', apiNotFound());

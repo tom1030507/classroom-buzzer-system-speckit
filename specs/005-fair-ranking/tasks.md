@@ -28,7 +28,7 @@ description: "SF-05 公平排序的任務清單"
 
 **Purpose**: 掛載 SF-05 router
 
-- [ ] T001 [P] 建立 `src/features/fair-ranking/router.js`，匯出回傳空 Express `Router` 的 `createFairRankingRouter(deps)`；在 `src/app.js` 加入 `import { createFairRankingRouter } from './features/fair-ranking/router.js'`，並以 `api.use(createFairRankingRouter(deps));` 取代預留的 `//   api.use(createFairRankingRouter(deps));      // SF-05 005-fair-ranking` 註解行（掛在 `createResultsExportRouter` 之後）
+- [X] T001 [P] 建立 `src/features/fair-ranking/router.js`，匯出回傳空 Express `Router` 的 `createFairRankingRouter(deps)`；在 `src/app.js` 加入 `import { createFairRankingRouter } from './features/fair-ranking/router.js'`，並以 `api.use(createFairRankingRouter(deps));` 取代預留的 `//   api.use(createFairRankingRouter(deps));      // SF-05 005-fair-ranking` 註解行（掛在 `createResultsExportRouter` 之後）
 
 ---
 
