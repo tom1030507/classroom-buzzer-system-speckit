@@ -110,7 +110,7 @@ description: "SF-05 公平排序的任務清單"
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T021 更新 SF-04 文件中因 SF-05 而過時的敘述：`specs/004-results-export/acceptance.md`（「公平模式在 SF-05 完成前無法結束」改為公平模式由 `specs/005-fair-ranking` 提供）、`specs/004-results-export/quickstart.md`（`results.test.js` 的說明移除「公平模式拒絕」，改為「結束時保存、不可修改、結果檢視」）、`specs/004-results-export/contracts/http-api.md`（409 `RANKING_UNAVAILABLE` 改為「活動模式沒有登錄順位計算（目前所有模式都有，不會發生）」）；`spec.md`、`research.md`、`tasks.md` 是當時的紀錄，不改
+- [X] T021 更新 SF-04 文件中因 SF-05 而過時的敘述：`specs/004-results-export/acceptance.md`（「公平模式在 SF-05 完成前無法結束」改為公平模式由 `specs/005-fair-ranking` 提供）、`specs/004-results-export/quickstart.md`（`results.test.js` 的說明移除「公平模式拒絕」，改為「結束時保存、不可修改、結果檢視」）、`specs/004-results-export/contracts/http-api.md`（409 `RANKING_UNAVAILABLE` 改為「活動模式沒有登錄順位計算（目前所有模式都有，不會發生）」）；`spec.md`、`research.md`、`tasks.md` 是當時的紀錄，不改
 - [ ] T022 執行 `npm test`，全部通過
 - [ ] T023 以 `npm start`（沒有真實試算表時以測試替身 gateway 啟動）搭配 headless Chrome（DevTools Protocol，做法同 SF-04）走一次 quickstart.md 的本機流程，並把截圖存到 `specs/005-fair-ranking/evidence/`：準備中改選與開啟後鎖定、學生端模式與規則即時更新、公平模式搶答中監看表的「勝出：結束時計算」、公平模式結果頁（規則與範例、最終順位與受理順序兩欄、第二單位乙組勝出）、寫回預覽標示模式、只用鍵盤（Tab、方向鍵）操作單選群組、沒有頁面錯誤；記錄「結束後到結果頁出現」與「改選後到學生畫面更新」的耗時（目標 2 秒內，SC-002、SC-003）
 - [ ] T024 建立 `specs/005-fair-ranking/acceptance.md`：列出 AC-21、AC-22、AC-23 對應的自動化測試與畫面證據（截圖路徑），SC-003 的「直接修改資料」引用既有的 `tests/unit/base-schema.test.js`（「mode can change while PREPARING and is locked once OPEN」），以及待真實雲端試算表完成的項目（公平模式寫回、兩種模式共通情境，屬整合驗收 #20），明確標為待驗證

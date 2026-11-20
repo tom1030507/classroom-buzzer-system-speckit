@@ -64,4 +64,5 @@ POST 端點另需同源 `Origin` 與 `X-CSRF-Token`（否則 403 `INVALID_ORIGIN
 
 `POST /api/teacher/activities/:activityId/close` 的行為不變，另在同一交易保存結果。新增錯誤：
 
-- 409 `RANKING_UNAVAILABLE`：活動模式沒有對應的順位計算（SF-05 完成前的公平模式）；活動維持搶答中。
+- 409 `RANKING_UNAVAILABLE`：活動模式沒有登錄的順位計算；活動維持搶答中。SF-05 加入公平模式的順位計算後，
+  兩種模式都有，這個錯誤只是防止日後新增模式卻忘了登錄。
