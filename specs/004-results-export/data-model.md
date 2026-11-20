@@ -37,6 +37,7 @@
 | `export_id` | INTEGER NOT NULL | 指向 `sheet_exports`；與 `question_id` 組成 PK |
 | `question_id` | INTEGER NOT NULL | 指向 `questions`；只記錄有勝出答案的題目 |
 | `spreadsheet_id`、`sheet_id`、`row_index`、`column_index` | | 本次的目標格（0-based），取自匯入時的映射 |
+| `sheet_title` | TEXT NOT NULL | 寫回當下的工作表名稱（工作表已不存在時為匯入時的名稱），只供顯示 |
 | `content` | TEXT NOT NULL | 要寫入的勝出答案原文 |
 | `status` | TEXT NOT NULL | 見下表 |
 | `reason` | TEXT | 衝突或失敗原因代碼 |
@@ -89,6 +90,7 @@
 | `groupName`、`content` | 勝出組與答案；無人作答時為 `null` |
 | `target` | `{ sheetId, sheetTitle, cell }`，`sheetTitle` 為讀取當下的名稱（工作表不存在時為匯入時的名稱），`cell` 為 A1 格位 |
 | `status`、`reason` | 預覽：`READY`、`ALREADY_PRESENT`、`CONFLICT`、`NO_ANSWER`；寫回：上表的狀態 |
+| `reasonText` | `reason` 的中文說明；沒有原因時為 `null` |
 
 ## 驗證規則摘要
 
