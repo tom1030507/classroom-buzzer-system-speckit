@@ -129,9 +129,9 @@ description: "SF-04 結果與匯出的任務清單"
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T033 執行 `npm test`，全部通過
-- [ ] T034 以 `npm start` 啟動並以瀏覽器走一次 quickstart.md 的本機流程（結果自動顯示、CSV 下載），確認畫面與鍵盤操作
-- [ ] T035 建立 `specs/004-results-export/acceptance.md`：列出每個 AC 對應的自動化測試，以及待真實雲端試算表與試算表軟體完成的人工驗收項目（AC-12、AC-13、AC-14、AC-17、AC-02、AC-20）
+- [X] T033 執行 `npm test`，全部通過
+- [X] T034 以 `npm start` 啟動並以瀏覽器走一次 quickstart.md 的本機流程（結果自動顯示、CSV 下載），確認畫面與鍵盤操作
+- [X] T035 建立 `specs/004-results-export/acceptance.md`：列出每個 AC 對應的自動化測試，以及待真實雲端試算表與試算表軟體完成的人工驗收項目（AC-12、AC-13、AC-14、AC-17、AC-02、AC-20）
 - [ ] T036 依 `after_implement` hook 執行 `/speckit-plantuml-sync`，產生 `specs/004-results-export/diagram-sync.md` 並更新圖表
 
 ---
