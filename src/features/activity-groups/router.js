@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { createActivity, getActivity, joinActivity, listAvailableActivities, listGroups } from './activities.js';
+import { createActivity, getActivity, joinActivity, leaveActivity, listAvailableActivities, listGroups } from './activities.js';
 import { teacherConfigured, verifyTeacherPassword } from './password.js';
 import {
-  endTeacherSession, readStudentSession, readTeacherSession, requireMutation,
-  requireTeacher, respondToJoin, startTeacherSession,
+  endTeacherSession, readStudentSession, readTeacherSession, requireGroupSession, requireMutation,
+  requireTeacher, respondToJoin, respondToLeave, startTeacherSession,
 } from './sessions.js';
 
 export function createActivityGroupsRouter(deps) {
@@ -39,6 +39,10 @@ export function createActivityGroupsRouter(deps) {
   router.get('/student/session', (req, res) => res.json(readStudentSession(deps, req, res)));
   router.post('/student/join', studentMutation, (req, res) => {
     res.status(201).json(respondToJoin(res, joinActivity(deps, req)));
+  });
+  router.post('/student/leave', requireGroupSession(deps), studentMutation, (req, res) => {
+    leaveActivity(deps, req);
+    res.json(respondToLeave(res));
   });
   return router;
 }
