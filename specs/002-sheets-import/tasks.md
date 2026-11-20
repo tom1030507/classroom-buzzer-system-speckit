@@ -1,7 +1,12 @@
 # SF-02 任務
 
-- [x] T001（#6）先測試解析、排序、題組與格位，再實作標記解析器。
-- [x] T002（#7）測試憑證、簽章、只用 Sheets scope、讀取與錯誤處理，再實作 Google Gateway。
-- [x] T003（#8）測試教師權限、預覽、確認與錯誤後保留原匯入，再接上 API、資料存取和教師頁。
-- [x] T004（#5）核對圖表與 AC 證據，執行 SF-02 自動測試。
-- [ ] T005（#5、#7、#8）依驗收紀錄在真實雲端試算表重現 AC-01、AC-03，附試算表連結與結果截圖。
+## 解析與讀取
+
+- [x] T001（#6，US1，FR-02、FR-08，AC-02、AC-03、AC-17）實作 `src/features/sheets-import/parser.js`，由 `tests/unit/sheets-import/parser.test.js` 驗證解析、排序、題組、格位及全形標記拒絕。
+- [x] T002（#7，US2，FR-02，AC-01、AC-03）實作 `src/features/sheets-import/gateway.js`；`tests/unit/sheets-import/gateway.test.js` 驗證憑證、簽章、Sheets scope、讀取與錯誤映射。
+
+## 教師匯入與驗證
+
+- [x] T003（#8，US3，FR-02、FR-08，AC-02、AC-03、AC-17）接上 `router.js`、`units.js` 及 `public/teacher/sheets-import.js`，由 `tests/integration/sheets-import/import.test.js` 驗證教師授權、階段、預覽、確認及失敗保留舊匯入。
+- [x] T004（#5，DC-02、DC-03）核對圖表、契約、測試與 [驗收紀錄](acceptance.md)。
+- [ ] T005（#5、#7、#8，US2、US3，FR-02，AC-01、AC-03）依驗收紀錄使用真實雲端試算表，保存試算表連結與結果截圖。
