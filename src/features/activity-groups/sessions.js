@@ -88,9 +88,12 @@ export function requireMutation(deps, role) {
 function bootstrap(req, res, role) {
   const cookieName = bootstrapCookie(role);
   const existing = readCookie(req, cookieName);
-  if (existing) return csrf(existing);
+  return existing ? csrf(existing) : issueBootstrap(res, role);
+}
+
+function issueBootstrap(res, role) {
   const token = newToken();
-  res.cookie(cookieName, token, { ...COOKIE_OPTIONS, maxAge: HOUR });
+  res.cookie(bootstrapCookie(role), token, { ...COOKIE_OPTIONS, maxAge: HOUR });
   return csrf(token);
 }
 
@@ -131,6 +134,11 @@ export function groupJoinToken(db, previousToken) {
 export function insertGroupSession(db, groupId, token) {
   db.prepare('INSERT INTO group_sessions (token_hash, group_id) VALUES (?, ?)').run(digest(token), groupId);
   return token;
+}
+
+export function respondToLeave(res) {
+  res.clearCookie(COOKIE.student, COOKIE_OPTIONS);
+  return { group: null, activity: null, csrfToken: issueBootstrap(res, 'student') };
 }
 
 export function respondToJoin(res, session) {

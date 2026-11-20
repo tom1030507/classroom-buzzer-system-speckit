@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { withTransaction } from '../../db/transaction.js';
-import { badRequest, conflict, notFound } from '../../lib/errors.js';
+import { badRequest, conflict, notFound, unauthorized } from '../../lib/errors.js';
 import { nowIso } from '../../lib/time.js';
 import { findGroupSession, getGroupSession, groupJoinToken, insertGroupSession } from './sessions.js';
 
@@ -66,5 +66,18 @@ export function joinActivity(deps, req) {
     if (!group) throw conflict('JOIN_REJECTED', '無法使用這個組名加入，請輸入其他組名。');
     insertGroupSession(db, group.id, token);
     return { token, groupId: group.id, name, activityId: activity.id, status: activity.status, mode: activity.mode };
+  });
+}
+
+export function leaveActivity(deps, req) {
+  const { db } = deps;
+  return withTransaction(db, () => {
+    const session = getGroupSession(deps, req);
+    if (!session) throw unauthorized('GROUP_REQUIRED', '請先加入活動。');
+    if (session.status !== 'PREPARING') {
+      throw conflict('INVALID_PHASE', '只有活動準備中可以退出組別。');
+    }
+    db.prepare('DELETE FROM student_groups WHERE id = ? AND activity_id = ?')
+      .run(session.groupId, session.activityId);
   });
 }
