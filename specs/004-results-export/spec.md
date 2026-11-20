@@ -11,6 +11,13 @@
 負責人：45678XYZ。對應 GitHub #13（總覽）、#14、#15、#16。產品基準為根目錄 [`spec.md`](../../spec.md) v1.0；
 本文件的需求編號 FR-001 起為本功能需求，括號內標註對應的 `spec.md` FR／AC 編號。
 
+## Clarifications
+
+### Session 2026-11-20
+
+- Q: CSV 的 `unit_id` 欄位要用什麼格式？ → A: 單題為 `Q:<題號>`、題組為 `G:<題組代號>`，可直接對照試算表上的標記。
+- Q: 結果頁與 CSV 的實際受理順序（`accepted_order`）要用哪一種數字？ → A: 單位內名次（1 起算），與 SF-03 教師監看的「受理順序」同義。
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 結束時保存結果並查看（Priority: P1，#14）
@@ -117,11 +124,11 @@
 
 - **FR-019**（FR-09、AC-19）：只有老師 MUST 能在活動結束後下載 CSV；學生、未登入者或未結束的活動一律拒絕。
 - **FR-020**（FR-09）：CSV MUST 以 UTF-8（含 BOM）編碼、CRLF 換行，第一列為固定欄位 `activity_id, mode, unit_id, question_id, group_name, answer, accepted_at, accepted_order, rank, is_winner`。
-- **FR-021**（FR-09）：每筆受理 MUST 依題目展開為每題一列，依單位固定順序、最終順位、組內題序排序；時間為 UTC ISO 8601；`is_winner` 為 `true` 或 `false`。
+- **FR-021**（FR-09）：每筆受理 MUST 依題目展開為每題一列，依單位固定順序、最終順位、組內題序排序；時間為 UTC ISO 8601；`is_winner` 為 `true` 或 `false`。`unit_id` 單題為 `Q:<題號>`、題組為 `G:<題組代號>`，`question_id` 為原題號。
 - **FR-022**（FR-09）：無人作答的題目 MUST 仍有一列，`group_name`、`answer`、`accepted_at`、`accepted_order`、`rank` 留空，`is_winner` 為 `false`。
 - **FR-023**（FR-09、AC-19）：含逗號、雙引號、CR 或 LF 的欄位 MUST 以雙引號包住，內部雙引號重複一次。
 - **FR-024**（FR-09、AC-20）：來自使用者輸入的欄位（組名、答案、題號與單位代號）去除前導空白後若以 `=`、`+`、`-`、`@` 開頭，或原值有前導 tab、CR、LF，MUST 在原值前加一個單引號；資料庫中的原值不變。
-- **FR-025**（FR-09、§4）：`accepted_order` MUST 為該單位內的實際受理順序（1 為最先受理），`rank` 為最終順位；兩者分開輸出，速度模式下兩者相同。
+- **FR-025**（FR-06、FR-09、§4）：結果頁與 CSV 的實際受理順序（`accepted_order`）MUST 為該單位內依伺服器受理序號排列的名次（1 為最先受理，與 SF-03 教師監看的「受理順序」同義），`rank` 為最終順位；兩者分開呈現，速度模式下兩者相同。
 
 ### Key Entities *(include if feature involves data)*
 
@@ -144,8 +151,7 @@
 ## Assumptions
 
 - 模式選擇由 SF-05（#19）提供；SF-04 完成時，透過介面建立的活動都是速度模式。公平模式的順位由 SF-05 計算後，沿用本功能的結果保存、檢視、寫回與 CSV。
-- 「實際受理順序」沿用 SF-03 教師監看的定義：單位內依伺服器受理序號排列的名次（1 起算）。
-- CSV 的 `unit_id` 採可對照試算表標記的代號：單題為 `Q:<題號>`，題組為 `G:<題組代號>`；兩者在同一活動內都唯一（待 `/speckit-clarify` 確認）。
+- 老師在建立下一場活動前完成寫回與下載 CSV。SF-01 的活動清單只保留最近一場已結束的活動，歷史搜尋不在本版範圍（spec.md §10）。
 - 每場活動的題目來自同一份雲端試算表（SF-02 匯入），服務帳戶已有該試算表的編輯權限（spec.md §7）；寫回沿用 SF-02 的 Google 連線與授權。
 - 目標格是否「仍是原標記」以去除前後空白後與匯入時的標記相同為準，與 SF-02 解析標記的規則一致。
 - 任一目標衝突就整批停止，是為了保留所有原標記，讓老師恢復結構後重試，或另建活動重新匯入。
