@@ -65,7 +65,7 @@ description: "SF-04 結果與匯出的任務清單"
 
 ### Tests for User Story 1（先寫並確認失敗）
 
-- [ ] T011 [US1] 在 `tests/integration/results-export/results-export.test.js` 以 `startTestApp`、`browser()` 寫 HTTP 測試：教師登入、建立活動、兩組加入（fixtures 建立題目）、開啟、送出後結束；`GET /api/teacher/activities/:id/results` 結束前 409 `INVALID_PHASE`、結束後 200；`GET /api/student/results` 結束前 409 且回應不含其他組名稱或答案（AC-09），結束後與教師回應相同（FR-003）；學生呼叫教師結果端點 401；未登入 401；以檔案型 SQLite 關閉後用新的 app 開啟同一檔案，結果相同（AC-15）
+- [ ] T011 [US1] 在 `tests/integration/results-export/results-export.test.js` 以 `startTestApp`、`browser()` 寫 HTTP 測試：教師登入、建立活動、兩組加入（fixtures 建立題目）、開啟、送出後結束；`GET /api/teacher/activities/:id/results` 結束前 409 `INVALID_PHASE`、結束後 200；`GET /api/student/results` 結束前 409 且回應不含其他組名稱或答案（AC-09），結束後與教師回應相同（FR-003）；學生呼叫教師結果端點 401；未登入 401；另一場活動的學生只拿到自己活動的狀態（409），不含本活動資料；以檔案型 SQLite 關閉後用新的 app 開啟同一檔案，結果相同（AC-15）
 
 ### Implementation for User Story 1
 
@@ -88,7 +88,7 @@ description: "SF-04 結果與匯出的任務清單"
 ### Tests for User Story 2（先寫並確認失敗）
 
 - [ ] T017 [P] [US2] 在 `tests/unit/sheets-import/gateway.test.js` 新增請求格式測試：`readTargets` 先以 `fields=sheets(properties(sheetId,title,sheetType,gridProperties),merges)` 讀取中繼資料，再只對「工作表存在且在格線內」的目標送 `:getByDataFilter`（1×1 `gridRange`，`fields` 含 `data(startRow,startColumn,rowData(values(userEnteredValue)))`），沒有可讀目標時不送第二個請求；`writeCells` 送 `POST …:batchUpdate?fields=spreadsheetId`，每格一個 `updateCells`（`range` 為 `sheetId` 與 0-based 起訖列欄、`rows[0].values[0].userEnteredValue.stringValue`、`fields: 'userEnteredValue'`）；Google 錯誤沿用既有代碼
-- [ ] T018 [P] [US2] 在 `tests/unit/results-export/sheets-export.test.js` 為 `classifyTarget` 寫測試：`SHEET_MISSING`、`OUT_OF_RANGE`（列 ≥ `rowCount` 或欄 ≥ `columnCount`）、`MERGED`、`ALREADY_PRESENT`（`\r\n`、`\r` 正規化為 `\n` 後相同）、`READY`（去除前後空白後等於去除前後空白的 `original_marker`，含全形空白）、`CHANGED`（空白、數字、公式、其他文字）
+- [ ] T018 [P] [US2] 在 `tests/unit/results-export/sheets-export.test.js` 為 `classifyTarget` 寫測試：`SHEET_MISSING`、`OUT_OF_RANGE`（列 ≥ `rowCount` 或欄 ≥ `columnCount`）、`MERGED`、`ALREADY_PRESENT`（`\r\n`、`\r` 正規化為 `\n` 後相同）、`READY`（去除前後空白後等於去除前後空白的 `original_marker`，含全形空白）、`CHANGED`（空白、數字、公式、其他文字）；工作表改名後仍為 `READY`，並回傳目前的工作表名稱
 - [ ] T019 [US2] 在 `tests/unit/results-export/sheets-export.test.js` 以 fixtures 與假的 gateway 測試匯出器：預覽逐題狀態與 `counts`（含 `NO_ANSWER`），不呼叫 `writeCells`；全部可寫入時寫入、回讀後 `WRITTEN`、整批 `SUCCEEDED`（AC-12、AC-17：題組各題各寫自己的格子）；任一衝突時不呼叫 `writeCells`，衝突題 `CONFLICT`、其餘 `SKIPPED`、整批 `CONFLICT`（AC-13）；`SHEETS_PERMISSION` 時 `FAILED`；逾時且回讀為答案時 `WRITTEN`、回讀仍為標記時 `FAILED`、回讀失敗時 `UNKNOWN`（AC-14）；`UNKNOWN` 之後重試，格子已是答案時 `ALREADY_PRESENT` 且不寫入；外部改寫為其他內容時 `CONFLICT` 且不覆寫；整批成功後重複寫回全部 `ALREADY_PRESENT`、不呼叫 `writeCells`；同活動並行時 409 `EXPORT_IN_PROGRESS`；遺留 `RUNNING` 改為 `UNKNOWN`（`INTERRUPTED`），其 `PENDING` 題目改為 `UNKNOWN`；`editsPaused` 不是 `true` 時 400 `EDITS_PAUSE_REQUIRED`；沒有勝出答案時 409 `NOTHING_TO_EXPORT`；寫回前後 `results` 不變（FR-018）
 - [ ] T020 [P] [US2] 在 `tests/integration/results-export/results-export.test.js` 以注入的假 gateway 測試寫回端點：預覽、寫回、最近紀錄只限教師（學生 401）；POST 缺少 Origin 或 CSRF 時 403；結束前 409 `INVALID_PHASE`；尚未寫回時最近紀錄為 `null`
 

@@ -10,7 +10,9 @@ npm test
 
 | 範圍 | 測試檔 |
 | --- | --- |
-| 速度順位、結束時保存、不可修改、公平模式拒絕、補齊舊資料 | `tests/unit/results-export/results.test.js` |
+| 速度順位 | `tests/unit/results-export/ranking.test.js` |
+| 結束時保存、不可修改、公平模式拒絕、結果檢視 | `tests/unit/results-export/results.test.js` |
+| 補齊上線前已結束活動的結果 | `tests/unit/results-export/backfill.test.js` |
 | CSV 編碼、欄位、轉義、排序、公式防護 | `tests/unit/results-export/csv.test.js` |
 | 目標格判定、整批停止、失敗與待核對、重試、互斥、中斷復原 | `tests/unit/results-export/sheets-export.test.js` |
 | Gateway 的讀取與寫入請求格式 | `tests/unit/sheets-import/gateway.test.js` |
