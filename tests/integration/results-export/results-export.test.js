@@ -151,3 +151,58 @@ test('AC-15 results stay the same after the server restarts', async (t) => {
     assert.deepEqual(reread.data, saved.results);
   }
 });
+
+/** Spreadsheet double that starts with every imported marker in place (automated tests only). */
+function markerSpreadsheet() {
+  const cells = new Map();
+  const key = ({ sheetId, rowIndex, columnIndex }) => `${sheetId}:${rowIndex}:${columnIndex}`;
+  const sheet = { id: 0, title: 'Sheet1', rowCount: 100, columnCount: 26, merges: [] };
+  return {
+    load(db, activityId) {
+      for (const row of db.prepare(`
+        SELECT sheet_id AS sheetId, row_index AS rowIndex, column_index AS columnIndex, original_marker AS marker
+        FROM questions WHERE activity_id = ?
+      `).all(activityId)) cells.set(key(row), { stringValue: row.marker });
+    },
+    async readTargets(spreadsheetId, targets) {
+      return targets.map((target) => ({ sheet, value: cells.get(key(target)) ?? null }));
+    },
+    async writeCells(spreadsheetId, written) {
+      for (const cell of written) cells.set(key(cell), { stringValue: cell.text });
+    },
+  };
+}
+
+test('only the teacher can preview and write back, with Origin and CSRF checks, after closing', async (t) => {
+  const spreadsheet = markerSpreadsheet();
+  const app = await startTestApp({ sheetsGateway: spreadsheet });
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity, alpha } = await playActivity(app, teacher);
+  spreadsheet.load(app.db, activity.id);
+  const exportPath = api(activity.id, 'sheets-export');
+
+  assert.equal((await post(teacher, `${exportPath}/preview`)).data.error.code, 'INVALID_PHASE');
+  await close(teacher, activity.id);
+
+  const intruder = withCookie(app, 'teacher', alpha, 'buzzer_group');
+  for (const response of [
+    await post(intruder, `${exportPath}/preview`), await post(intruder, exportPath, { editsPaused: true }), await intruder.request(exportPath),
+  ]) assert.equal(response.status, 401);
+  const forged = await teacher.request(exportPath, {
+    method: 'POST', body: { editsPaused: true }, headers: { 'X-CSRF-Token': 'x'.repeat(43) },
+  });
+  assert.equal(forged.data.error.code, 'INVALID_CSRF');
+  const crossSite = await teacher.request(`${exportPath}/preview`, { method: 'POST', body: {}, headers: { Origin: 'http://example.com' } });
+  assert.equal(crossSite.data.error.code, 'INVALID_ORIGIN');
+  assert.deepEqual((await teacher.request(exportPath)).data, { export: null });
+
+  const preview = await post(teacher, `${exportPath}/preview`);
+  assert.equal(preview.status, 200);
+  assert.deepEqual(preview.data.counts, { READY: 4, ALREADY_PRESENT: 0, CONFLICT: 0, NO_ANSWER: 1 });
+  assert.equal((await post(teacher, exportPath)).data.error.code, 'EDITS_PAUSE_REQUIRED');
+  const written = await post(teacher, exportPath, { editsPaused: true });
+  assert.equal(written.status, 200);
+  assert.equal(written.data.export.outcome, 'SUCCEEDED');
+  assert.deepEqual((await teacher.request(exportPath)).data, written.data);
+});

@@ -32,6 +32,35 @@ function rankingUnits(db, activityId) {
 }
 
 /**
+ * Every imported question with its target cell and, when its unit has a winner, the winning
+ * group and answer (null when nobody answered). Group members each keep their own cell.
+ */
+export function listWinningAnswers(db, activityId) {
+  const { id, status } = getActivity(db, activityId);
+  if (status !== 'CLOSED') throw conflict('INVALID_PHASE', '活動結束後才能寫回試算表。');
+  const unranked = db.prepare(`
+    SELECT 1 FROM submissions AS s LEFT JOIN results AS r ON r.submission_id = s.id
+    WHERE s.activity_id = ? AND r.submission_id IS NULL LIMIT 1
+  `).get(id);
+  if (unranked) throw conflict('RESULTS_UNAVAILABLE', '這場活動沒有保存結果。');
+  return db.prepare(`
+    SELECT q.id AS questionId, q.question_key AS questionKey,
+           CASE u.kind WHEN 'GROUP' THEN 'G:' || u.group_code ELSE 'Q:' || q.question_key END AS unitLabel,
+           q.spreadsheet_id AS spreadsheetId, q.sheet_id AS sheetId, q.sheet_title AS sheetTitle,
+           q.row_index AS rowIndex, q.column_index AS columnIndex, q.original_marker AS originalMarker,
+           g.name AS groupName, a.answer_text AS content
+    FROM questions AS q
+    JOIN units AS u ON u.id = q.unit_id
+    LEFT JOIN results AS r ON r.unit_id = u.id AND r.is_winner = 1
+    LEFT JOIN submissions AS s ON s.id = r.submission_id
+    LEFT JOIN student_groups AS g ON g.id = s.group_id
+    LEFT JOIN submission_answers AS a ON a.submission_id = s.id AND a.question_id = q.id
+    WHERE q.activity_id = ?
+    ORDER BY u.position, q.position_in_unit
+  `).all(id);
+}
+
+/**
  * The fixed results shared by the result pages, the CSV and the Sheets write-back
  * (specs/004-results-export/data-model.md). Contains no internal group or sequence ids.
  */
