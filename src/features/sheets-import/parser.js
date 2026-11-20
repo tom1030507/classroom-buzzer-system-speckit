@@ -1,7 +1,8 @@
 import { badRequest } from '../../lib/errors.js';
 
 const MARKER = /^\{\{Q:([A-Za-z0-9._-]+)(?:\|G:([A-Za-z0-9._-]+))?\}\}$/;
-const MARKER_START = /\{\{\s*[qQ](?![A-Za-z])/;
+// Recognize full-width IME input as a candidate so malformed markers get a cell error.
+const MARKER_START = /[{｛]{2}\s*[qQｑＱ](?![A-Za-zＡ-Ｚａ-ｚ])/;
 
 export function cellAddress(rowIndex, columnIndex) {
   let letters = '';

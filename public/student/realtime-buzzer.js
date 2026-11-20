@@ -105,7 +105,11 @@ function createUnit(state, unit, shape) {
 
 function updateSnapshot(state, snapshot) {
   if (snapshot?.activity?.id !== state.activity.id || phaseWentBack(state.activity.status, snapshot.activity.status)) return;
+  const phaseChanged = state.activity.status !== snapshot.activity.status;
   state.activity = snapshot.activity;
+  if (phaseChanged) {
+    document.dispatchEvent(new CustomEvent('student-activity-phase', { detail: state.activity }));
+  }
   reflectPhase(state);
   showError('');
   empty.hidden = snapshot.units.length > 0 || state.activity.status !== 'PREPARING';

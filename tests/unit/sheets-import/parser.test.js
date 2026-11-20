@@ -42,12 +42,13 @@ test('AC-02 and AC-17 preserve teacher sheet order, row-major positions and grou
 });
 
 test('AC-03 ignores ordinary text and formulas and rejects a sheet with no literal markers', () => {
-  const data = [block(0, 0, ['講義內容', '{{OTHER}}', { formulaValue: '="{{Q:1}}"' }, { numberValue: 42 }])];
+  const data = [block(0, 0, ['講義內容', '{{OTHER}}', '｛｛Ｑｕｅｓｔｉｏｎ｝｝', { formulaValue: '="{{Q:1}}"' }, { numberValue: 42 }])];
   assert.throws(() => parseSheets('sheet', [{ id: 0, title: 'A', data }]), { code: 'IMPORT_NO_QUESTIONS' });
 });
 
 for (const marker of ['{{Q:}}', '{{Q:A B}}', '{{Q:X|G:}}', '{{Q:X|G:A/B}}', '{{Q:一}}',
-  '{{Q:1}', '文字 {{Q:1}}', '{{Q:1}} 文字', '{{q:1}}', '{{Q}}', '{{Q1}}']) {
+  '{{Q:1}', '文字 {{Q:1}}', '{{Q:1}} 文字', '{{q:1}}', '{{Q}}', '{{Q1}}',
+  '｛｛Q:1｝｝', '{｛Q:1}}', '｛｛Ｑ：2｜Ｇ：A｝｝']) {
   test(`AC-03 rejects malformed marker ${marker}`, () => {
     const data = [block(0, 0, ['{{Q:valid}}', marker])];
     assert.throws(() => parseSheets('sheet', [{ id: 0, title: 'A', data }]), { code: 'IMPORT_INVALID_MARKER' });

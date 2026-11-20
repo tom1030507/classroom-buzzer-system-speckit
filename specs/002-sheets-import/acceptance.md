@@ -4,10 +4,10 @@
 
 ## 自動化
 
-Node.js 24.17.0 上，25 項 SF-02 測試通過。執行方式為 `node --test --test-reporter=spec 'tests/{unit,integration}/sheets-import/*.test.js'`。
+Node.js 24.17.0 上，28 項 SF-02 測試通過。執行方式為 `node --test --test-reporter=spec 'tests/{unit,integration}/sheets-import/*.test.js'`。
 
 - **AC-02（匯入）、AC-17（匯入）**。解析器測試包含兩張不同格線版面的工作表、五道非連續題號、三個作答單位、跨工作表的三成員題組與 AA 欄之後的格位。HTTP 測試確認教師預覽與保存的題號、格位、原標記一致。[解析器測試](../../tests/unit/sheets-import/parser.test.js) · [匯入 API 測試](../../tests/integration/sheets-import/import.test.js)
-- **AC-03**。測試零題、重複和非法標記、合併儲存格、單成員題組、無權限、試算表不存在、配額、斷網和逾時。HTTP 測試驗證預覽、讀取、寫入失敗時舊匯入仍可查詢，並以 SQLite trigger 確認部分寫入失敗會復原。測試也涵蓋 Google 讀取尚未完成時活動已開啟的競態。[Gateway 測試](../../tests/unit/sheets-import/gateway.test.js) · [匯入 API 測試](../../tests/integration/sheets-import/import.test.js)
+- **AC-03**。測試零題、重複和非法標記（含全形與混用標記）、合併儲存格、單成員題組、無權限、試算表不存在、配額、斷網和逾時。HTTP 測試驗證預覽、讀取、寫入失敗時舊匯入仍可查詢，並以 SQLite trigger 確認部分寫入失敗會復原。測試也涵蓋 Google 讀取尚未完成時活動已開啟的競態。[Gateway 測試](../../tests/unit/sheets-import/gateway.test.js) · [匯入 API 測試](../../tests/integration/sheets-import/import.test.js)
 - **教師權限與階段**。HTTP 測試驗證教師登入、Origin／CSRF、階段鎖定及預覽僅限原活動和原工作階段。[匯入 API 測試](../../tests/integration/sheets-import/import.test.js)
 
 ## 真實線上試算表驗收
