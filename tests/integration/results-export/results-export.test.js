@@ -206,3 +206,36 @@ test('only the teacher can preview and write back, with Origin and CSRF checks, 
   assert.equal(written.data.export.outcome, 'SUCCEEDED');
   assert.deepEqual((await teacher.request(exportPath)).data, written.data);
 });
+
+test('AC-19 the teacher downloads the same results as CSV after closing, and students cannot', async (t) => {
+  const { app, teacher, activity, alpha } = await fixture(t);
+  const csvPath = api(activity.id, 'results.csv');
+  assert.equal((await teacher.request(csvPath)).data.error.code, 'INVALID_PHASE');
+  await close(teacher, activity.id);
+
+  assert.equal((await withCookie(app, 'teacher', alpha, 'buzzer_group').request(csvPath)).status, 401);
+  assert.equal((await browser(app, 'teacher').request(csvPath)).status, 401);
+
+  const response = await teacher.request(csvPath);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/csv; charset=utf-8');
+  assert.equal(response.headers.get('content-disposition'), `attachment; filename="results-${activity.id}.csv"`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  assert.deepEqual([...bytes.slice(0, 3)], [0xef, 0xbb, 0xbf]);
+  const lines = new TextDecoder().decode(bytes).split('\r\n');
+  assert.equal(lines[0], 'activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner');
+  assert.equal(lines.at(-1), '');
+  assert.deepEqual(lines.slice(1, -1).map((line) => {
+    const [id, mode, unitId, questionId, groupName, answerText, , acceptedOrder, rank, isWinner] = line.split(',');
+    assert.equal(id, activity.id);
+    assert.equal(mode, 'SPEED');
+    return [unitId, questionId, groupName, answerText, acceptedOrder, rank, isWinner];
+  }), [
+    ['Q:1', '1', '甲組', '光合作用', '1', '1', 'true'],
+    ['Q:1', '1', '乙組', '呼吸作用', '2', '2', 'false'],
+    ['G:A', '2', '乙組', '葉綠體', '1', '1', 'true'],
+    ['G:A', '3', '乙組', '二氧化碳', '1', '1', 'true'],
+    ['G:A', '4', '乙組', '氧氣', '1', '1', 'true'],
+    ['Q:5', '5', '', '', '', '', 'false'],
+  ]);
+});

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireGroupSession, requireMutation, requireTeacher } from '../activity-groups/sessions.js';
+import { buildResultsCsv } from './csv.js';
 import { readResults } from './results.js';
 import { createSheetsExporter } from './sheets-export.js';
 
@@ -15,6 +16,15 @@ export function createResultsExportRouter(deps) {
 
   router.get(`${activityPath}/results`, teacherOnly, (req, res) => {
     res.json(readResults(db, req.params.activityId));
+  });
+  router.get(`${activityPath}/results.csv`, teacherOnly, (req, res) => {
+    const view = readResults(db, req.params.activityId);
+    // Activity ids are server-generated UUIDs, so the quoted filename needs no escaping.
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="results-${view.activity.id}.csv"`,
+    });
+    res.send(buildResultsCsv(view));
   });
 
   // A group only ever reads its own activity; the session decides which one (FR-005).
