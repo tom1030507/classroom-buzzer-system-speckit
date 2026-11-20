@@ -19,7 +19,7 @@ Teacher -> UI : 預覽寫回
 UI -> Router : POST /api/teacher/activities/:id/sheets-export/preview
 Router -> Router : requireTeacher、requireMutation；活動須為 CLOSED
 Router -> Export : previewExport
-Export -> Db : readResults → 勝出答案的目標格（題組各題各一格）
+Export -> Db : listWinningAnswers → 勝出答案與目標格（題組各題各一格）
 Export -> Gateway : readTargets(spreadsheetId, targets)
 Gateway -> Sheets : 工作表屬性與合併格（以 sheet_id 識別）
 Gateway -> Sheets : 目標格的 userEnteredValue（getByDataFilter）

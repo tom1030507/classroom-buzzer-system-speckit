@@ -22,7 +22,7 @@ package "瀏覽器：HTML／CSS／原生 JavaScript" {
 node "Node.js 伺服器（只綁定 127.0.0.1）" {
   package "src/features/results-export/（SF-04）" #E8F4FF {
     [router.js\ncreateResultsExportRouter] as Router
-    [results.js\nsaveFinalResults・readResults] as Results
+    [results.js\nsaveFinalResults・readResults\nlistWinningAnswers] as Results
     [ranking.js\nrankSpeed・RANKERS\n（SF-05 加入 FAIR）] as Ranking
     [csv.js\nbuildResultsCsv] as Csv
     [sheets-export.js\npreviewExport・runExport\nclassifyTarget・同活動互斥] as Export
@@ -37,8 +37,8 @@ node "Node.js 伺服器（只綁定 127.0.0.1）" {
 }
 
 database "SQLite" {
-  [results\n（000-base-schema）] as ResultsTable
-  [sheet_exports・sheet_export_items\n（004-01 migration）] as ExportTables
+  [results\n（000-base-schema；\n004-01 補齊舊活動）] as ResultsTable
+  [sheet_exports・sheet_export_items\n（004-02 migration）] as ExportTables
   [activities・units・questions\nstudent_groups・submissions\nsubmission_answers（唯讀）] as SourceTables
 }
 cloud "Google Sheets API\n（老師的雲端試算表）" as SheetsApi
@@ -61,7 +61,7 @@ State ..> Tx
 Results --> Ranking
 Results --> ResultsTable
 Results --> SourceTables
-Export --> Results : readResults（勝出答案）
+Export --> Results : listWinningAnswers（勝出答案與目標格）
 Export --> Records
 Export --> Gateway : readTargets・writeCells
 Records --> ExportTables

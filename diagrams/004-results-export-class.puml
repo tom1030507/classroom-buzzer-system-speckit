@@ -42,7 +42,7 @@ package "沿用的資料表（000-base-schema）" {
   }
 }
 
-package "SF-04 擁有的資料" #E8F4FF {
+package "SF-04 擁有的資料（寫回紀錄由 004-02 新增）" #E8F4FF {
   class Result <<results>> {
     submission_id : INTEGER <<PK, FK>>
     unit_id : INTEGER <<FK>>
@@ -90,6 +90,7 @@ package "src/features/results-export/" #E8F4FF {
   class "results.js" as ResultsModule <<module>> {
     +saveFinalResults(db, activityId, mode)
     +readResults(db, activityId) : ResultView
+    +listWinningAnswers(db, activityId)
   }
   class "ranking.js" as RankingModule <<module>> {
     +RANKERS : { SPEED }
@@ -153,7 +154,7 @@ ResultsModule ..> RankingModule
 ResultsModule ..> Result : INSERT／SELECT
 ResultsModule ..> ResultView
 CsvModule ..> ResultView
-ExportModule ..> ResultView
+ExportModule ..> ResultsModule : listWinningAnswers
 ExportModule ..> GatewayModule
 ExportModule ..> RecordsModule
 RecordsModule ..> SheetExport
