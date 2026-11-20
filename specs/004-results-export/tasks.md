@@ -65,15 +65,15 @@ description: "SF-04 結果與匯出的任務清單"
 
 ### Tests for User Story 1（先寫並確認失敗）
 
-- [ ] T011 [US1] 在 `tests/integration/results-export/results-export.test.js` 以 `startTestApp`、`browser()` 寫 HTTP 測試：教師登入、建立活動、兩組加入（fixtures 建立題目）、開啟、送出後結束；`GET /api/teacher/activities/:id/results` 結束前 409 `INVALID_PHASE`、結束後 200；`GET /api/student/results` 結束前 409 且回應不含其他組名稱或答案（AC-09），結束後與教師回應相同（FR-003）；學生呼叫教師結果端點 401；未登入 401；另一場活動的學生只拿到自己活動的狀態（409），不含本活動資料；以檔案型 SQLite 關閉後用新的 app 開啟同一檔案，結果相同（AC-15）
+- [X] T011 [US1] 在 `tests/integration/results-export/results-export.test.js` 以 `startTestApp`、`browser()` 寫 HTTP 測試：教師登入、建立活動、兩組加入（fixtures 建立題目）、開啟、送出後結束；`GET /api/teacher/activities/:id/results` 結束前 409 `INVALID_PHASE`、結束後 200；`GET /api/student/results` 結束前 409 且回應不含其他組名稱或答案（AC-09），結束後與教師回應相同（FR-003）；學生呼叫教師結果端點 401；未登入 401；另一場活動的學生只拿到自己活動的狀態（409），不含本活動資料；以檔案型 SQLite 關閉後用新的 app 開啟同一檔案，結果相同（AC-15）
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] 在 `src/features/results-export/router.js` 新增 `GET /teacher/activities/:activityId/results`（`requireTeacher`，回傳 `readResults`）與 `GET /student/results`（`requireGroupSession`，回傳 `readResults(db, req.groupSession.activityId)`）（[contracts/http-api.md](contracts/http-api.md)）
-- [ ] T013 [P] [US1] 建立 `public/js/results-view.js`，匯出 `renderResults(container, view)`：每個單位一個 `section`，標題為 `第 X 題` 或 `題組（第 X 題、第 Y 題）`，勝出列為 `勝出：<組名>` 或 `無人作答`，表格欄位為「最終順位、組別、受理順序、受理時間、各題答案」，`caption` 標示模式；所有使用者輸入只經 `h()`／`setText()`（textContent）
-- [ ] T014 [US1] 建立 `public/teacher/results-export.js`，並在 `public/teacher/index.html` 的 `#teacher-buzzer` 之後加入 `<section id="results-export" hidden></section>`、於 `/teacher/activity-groups.js` 之前載入模組：收到 `teacher-activity` 或 `teacher-activity-phase` 且狀態為 `CLOSED` 時取一次結果並以 `renderResults` 呈現；切換活動時清空；錯誤以 `role="alert"` 文字顯示
-- [ ] T015 [US1] 建立 `public/student/results-export.js`，並在 `public/student/index.html` 的 `#student-buzzer` 之後加入 `<section id="student-results" hidden></section>`、於 `/student/activity-groups.js` 之前載入模組：收到 `student-activity-closed` 時取 `/api/student/results` 並呈現；收到 `student-activity` 時清空
-- [ ] T016 [US1] 在 `public/teacher/realtime-buzzer.js` 讓監看表在活動 `CLOSED` 後隱藏（保留階段文字），由結果表取代（research R13）
+- [X] T012 [US1] 在 `src/features/results-export/router.js` 新增 `GET /teacher/activities/:activityId/results`（`requireTeacher`，回傳 `readResults`）與 `GET /student/results`（`requireGroupSession`，回傳 `readResults(db, req.groupSession.activityId)`）（[contracts/http-api.md](contracts/http-api.md)）
+- [X] T013 [P] [US1] 建立 `public/js/results-view.js`，匯出 `renderResults(container, view)`：每個單位一個 `section`，標題為 `第 X 題` 或 `題組（第 X 題、第 Y 題）`，勝出列為 `勝出：<組名>` 或 `無人作答`，表格欄位為「最終順位、組別、受理順序、受理時間、各題答案」，`caption` 標示模式；所有使用者輸入只經 `h()`／`setText()`（textContent）
+- [X] T014 [US1] 建立 `public/teacher/results-export.js`，並在 `public/teacher/index.html` 的 `#teacher-buzzer` 之後加入 `<section id="results-export" hidden></section>`、於 `/teacher/activity-groups.js` 之前載入模組：收到 `teacher-activity` 或 `teacher-activity-phase` 且狀態為 `CLOSED` 時取一次結果並以 `renderResults` 呈現；切換活動時清空；錯誤以 `role="alert"` 文字顯示
+- [X] T015 [US1] 建立 `public/student/results-export.js`，並在 `public/student/index.html` 的 `#student-buzzer` 之後加入 `<section id="student-results" hidden></section>`、於 `/student/activity-groups.js` 之前載入模組：收到 `student-activity-closed` 時取 `/api/student/results` 並呈現；收到 `student-activity` 時清空
+- [X] T016 [US1] 在 `public/teacher/realtime-buzzer.js` 讓監看表在活動 `CLOSED` 後隱藏（保留階段文字），由結果表取代（research R13）
 
 **Checkpoint**: US1 可獨立驗收（AC-11、AC-15 的結果部分）
 
