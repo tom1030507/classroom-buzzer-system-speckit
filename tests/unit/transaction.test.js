@@ -36,11 +36,29 @@ describe('withTransaction', () => {
     assert.equal(db.isTransaction, false);
   });
 
-  test('rejects async callbacks and rolls back', () => {
+  test('rejects async callbacks before they run, so nothing is written after an await', async () => {
+    let ran = false;
     assert.throws(
       () =>
         withTransaction(db, async () => {
+          ran = true;
+          await null;
+          insert('late');
+        }),
+      /must be synchronous/,
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(ran, false);
+    assert.equal(count(), 0);
+    assert.equal(db.isTransaction, false);
+  });
+
+  test('rolls back a callback that returns a promise', () => {
+    assert.throws(
+      () =>
+        withTransaction(db, () => {
           insert('a');
+          return Promise.resolve();
         }),
       /must be synchronous/,
     );

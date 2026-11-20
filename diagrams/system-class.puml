@@ -123,6 +123,7 @@ note right of Activity
   狀態只能 PREPARING → OPEN → CLOSED。
   OPEN 後鎖定 mode、units、questions。
   只有 PREPARING 可新增組別。
+  units、questions、組別不可改屬其他活動。
 end note
 
 note right of Question

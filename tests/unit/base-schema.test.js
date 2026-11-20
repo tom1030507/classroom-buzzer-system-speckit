@@ -113,6 +113,42 @@ describe('base schema invariants', () => {
     });
   });
 
+  describe('activity ownership', () => {
+    test('questions, units and groups cannot move into another activity', () => {
+      const open = insertActivity(db);
+      const target = insertGroupUnit(db, open, { groupCode: 'G', questions: [{ questionKey: '1' }, { questionKey: '2' }] });
+      openActivity(db, open);
+
+      const preparing = insertActivity(db);
+      const source = insertSingleUnit(db, preparing, { questionKey: '9' });
+      const emptyUnitId = Number(
+        db.prepare("INSERT INTO units (activity_id, kind, position) VALUES (?, 'SINGLE', 2)").run(preparing).lastInsertRowid,
+      );
+      const groupId = insertGroup(db, preparing, 'Mover');
+
+      // Every other column is chosen so that only the ownership rule can reject the move.
+      assert.throws(
+        () =>
+          db
+            .prepare(`UPDATE questions SET activity_id = ?, unit_id = ?, position = 3, position_in_unit = 3, row_index = 30
+                      WHERE id = ?`)
+            .run(open, target.unitId, source.questionId),
+        /cannot move to another activity/,
+      );
+      assert.throws(
+        () => db.prepare('UPDATE units SET activity_id = ?, position = 9 WHERE id = ?').run(open, emptyUnitId),
+        /cannot move to another activity/,
+      );
+      assert.throws(
+        () => db.prepare('UPDATE student_groups SET activity_id = ? WHERE id = ?').run(open, groupId),
+        /cannot move to another activity/,
+      );
+
+      const count = (table) => db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE activity_id = ?`).get(open).n;
+      assert.deepEqual([count('questions'), count('units'), count('student_groups')], [2, 1, 0]);
+    });
+  });
+
   describe('submissions', () => {
     let activityId;
     let groupA;

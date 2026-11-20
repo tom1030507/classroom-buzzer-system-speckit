@@ -8,6 +8,7 @@
 | 檔名 | 用途 |
 | --- | --- |
 | `000-base-schema.sql` | 共用基礎模型（spec.md §6），由基礎架構建立 |
+| `000-patch-<序號>-<描述>.sql` | 基礎模型的後續修正，例如 `000-patch-01-lock-activity-ownership.sql`；`patch` 讓它排在 `000-base-schema.sql` 之後 |
 | `<功能編號>-<序號>-<描述>.sql` | 各子功能的擴充，例如 `001-01-sessions.sql`、`004-01-exports.sql` |
 
 功能編號沿用 `specs/NNN-<slug>/` 的編號，兩人平行開發時檔名才不會撞號。

@@ -119,7 +119,7 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 
 | 項目 | 負責人 | Issue | 實作 PR | 審閱者 | 驗收紀錄 |
 | --- | --- | --- | --- | --- | --- |
-| 基礎架構 | 45678XYZ | — | — | — | — |
+| 基礎架構 | 45678XYZ | [#1](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/1) | [#23](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/23) | tom1030507 | — |
 | SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | [#24](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24) | — | [驗收](specs/001-activity-groups/acceptance.md) |
 | SF-02 線上題目匯入 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | [#25](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25#pullrequestreview-5980074666) | [驗收](specs/002-sheets-import/acceptance.md) |
 | SF-03 即時搶答 | tom1030507 | [#9](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/9) | [#26](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/26) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/26#pullrequestreview-5980075044) | [驗收](specs/003-realtime-buzzer/acceptance.md) |
