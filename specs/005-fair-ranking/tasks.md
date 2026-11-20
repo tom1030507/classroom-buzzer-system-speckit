@@ -36,7 +36,7 @@ description: "SF-05 公平排序的任務清單"
 
 **Purpose**: 老師、學生與結果頁共用同一份模式名稱與規則說明；US2、US3 都使用
 
-- [ ] T002 [P] 建立 `public/js/mode-rules.js`：匯出凍結的 `modeLabel = { SPEED: '速度模式', FAIR: '公平模式' }`、凍結的 `modeRule`（`{ SPEED: string[], FAIR: string[] }`，每個元素一個段落，文字依 [research.md R7](research.md#r7-規則說明是前端固定常數) 的草稿；公平模式最後一段是只用「某組」「另一組」泛稱的簡短範例，不含任何組名或活動資料），以及 `renderModeRule(mode)`：回傳 `h('div', { class: 'mode-rule' }, ...)`，每個段落一個 `<p>`，只經 `/js/dom.js` 的 `h()` 以文字節點呈現；未知模式回傳空的 `div`（FR-010、FR-014，research R7）
+- [X] T002 [P] 建立 `public/js/mode-rules.js`：匯出凍結的 `modeLabel = { SPEED: '速度模式', FAIR: '公平模式' }`、凍結的 `modeRule`（`{ SPEED: string[], FAIR: string[] }`，每個元素一個段落，文字依 [research.md R7](research.md#r7-規則說明是前端固定常數) 的草稿；公平模式最後一段是只用「某組」「另一組」泛稱的簡短範例，不含任何組名或活動資料），以及 `renderModeRule(mode)`：回傳 `h('div', { class: 'mode-rule' }, ...)`，每個段落一個 `<p>`，只經 `/js/dom.js` 的 `h()` 以文字節點呈現；未知模式回傳空的 `div`（FR-010、FR-014，research R7）
 
 **Checkpoint**: 前端有單一的模式說明來源
 
