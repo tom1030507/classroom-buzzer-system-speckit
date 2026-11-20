@@ -114,7 +114,7 @@ description: "SF-05 公平排序的任務清單"
 - [X] T022 執行 `npm test`，全部通過
 - [X] T023 以 `npm start`（沒有真實試算表時以測試替身 gateway 啟動）搭配 headless Chrome（DevTools Protocol，做法同 SF-04）走一次 quickstart.md 的本機流程，並把截圖存到 `specs/005-fair-ranking/evidence/`：準備中改選與開啟後鎖定、學生端模式與規則即時更新、公平模式搶答中監看表的「勝出：結束時計算」、公平模式結果頁（規則與範例、最終順位與受理順序兩欄、第二單位乙組勝出）、寫回預覽標示模式、只用鍵盤（Tab、方向鍵）操作單選群組、沒有頁面錯誤；記錄「結束後到結果頁出現」與「改選後到學生畫面更新」的耗時（目標 2 秒內，SC-002、SC-003）
 - [X] T024 建立 `specs/005-fair-ranking/acceptance.md`：列出 AC-21、AC-22、AC-23 對應的自動化測試與畫面證據（截圖路徑），SC-003 的「直接修改資料」引用既有的 `tests/unit/base-schema.test.js`（「mode can change while PREPARING and is locked once OPEN」），以及待真實雲端試算表完成的項目（公平模式寫回、兩種模式共通情境，屬整合驗收 #20），明確標為待驗證
-- [ ] T025 更新 `README.md`：「已實作」段落加入公平排序（SF-05）；分工表 SF-05 列填入負責人 `45678XYZ`、Issue #17 與驗收紀錄連結（PR 欄於開啟 PR 後補上真實連結）；SF-04 列的審閱者填入 tom1030507 對 #29 的 approve review 連結（以 `gh api` 取得）
+- [X] T025 更新 `README.md`：「已實作」段落加入公平排序（SF-05）；分工表 SF-05 列填入負責人 `45678XYZ`、Issue #17 與驗收紀錄連結（PR 欄於開啟 PR 後補上真實連結）；SF-04 列的審閱者填入 tom1030507 對 #29 的 approve review 連結（以 `gh api` 取得）
 - [ ] T026 依 `after_implement` hook 執行 `/speckit-plantuml-sync`，產生 `specs/005-fair-ranking/diagram-sync.md` 並更新圖表；若 `results-export/ranking.js` 匯入 `fair-ranking/fair-ranking.js` 與 `diagrams/system-component.puml` 的 SF-05／SF-04 依賴方向不同，一併修正基準圖
 
 ---
