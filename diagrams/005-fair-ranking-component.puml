@@ -14,10 +14,10 @@ package "瀏覽器：HTML／CSS／原生 JavaScript" {
   package "SF-05（本功能）" #E8F4FF {
     [教師模式選擇\npublic/teacher/mode-select.js\n準備中改選・規則說明・開啟後鎖定] as TeacherMode
     [學生模式與規則\npublic/student/mode-info.js] as StudentMode
-    [共用模式說明\npublic/js/mode-rules.js\nmodeLabel・modeRule（固定文字）] as ModeRules
+    [共用模式說明\npublic/js/mode-rules.js\nmodeLabel・modeRule・renderModeRule（固定文字）] as ModeRules
   }
   package "沿用或小幅修改（SF-01、SF-03、SF-04）" {
-    [頁面模組與事件\nactivity-groups.js・realtime-buzzer.js\n（teacher-activity、student-activity 事件）\npublic/js/api.js・dom.js] as PageEvents
+    [頁面模組與事件\nactivity-groups.js・realtime-buzzer.js\n（teacher-activity、student-activity 事件；\nstudent-activity-phase 在模式改變時也派發）\npublic/js/api.js・dom.js] as PageEvents
     [SF-04 結果頁與寫回預覽（教師、學生）\nresults-view.js・results-export.js\n標示模式與規則說明] as ResultsUI
   }
 }
@@ -53,7 +53,7 @@ TeacherMode ..> ModeRules
 StudentMode ..> ModeRules
 ResultsUI ..> ModeRules
 TeacherMode ..> PageEvents : 監聽活動與階段事件
-StudentMode ..> PageEvents : 監聽 student-activity
+StudentMode ..> PageEvents : 監聽 student-activity・\nstudent-activity-phase
 TeacherMode --> Router : POST mode { mode }
 PageEvents --> State : POST open／close
 PageEvents --> Snapshots : SSE snapshot\n（含 activity.mode，老師與學生各自過濾）

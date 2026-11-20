@@ -73,7 +73,8 @@ class "results-export/ranking.js（SF-04；SF-05 加入 FAIR）" as RankingModul
 
 class "public/js/mode-rules.js（SF-05，前端）" as ModeRules <<module>> {
   +modeLabel : { SPEED : 速度模式, FAIR : 公平模式 }
-  +modeRule : { SPEED, FAIR }（固定說明文字）
+  +modeRule : { SPEED : string[], FAIR : string[] }（固定段落；公平模式附範例）
+  +renderModeRule(mode) : HTMLElement
 }
 
 Activity "1" *-- "0..*" Unit
