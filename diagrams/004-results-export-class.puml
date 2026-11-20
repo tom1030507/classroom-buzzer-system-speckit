@@ -64,6 +64,7 @@ package "SF-04 擁有的資料（寫回紀錄由 004-02 新增）" #E8F4FF {
     sheet_id : INTEGER
     row_index : INTEGER
     column_index : INTEGER
+    sheet_title : TEXT
     content : TEXT
     status : ExportItemStatus
     reason : TEXT?
@@ -100,22 +101,30 @@ package "src/features/results-export/" #E8F4FF {
     +buildResultsCsv(view) : string
   }
   class "sheets-export.js" as ExportModule <<module>> {
-    +previewExport(deps, activityId)
-    +runExport(deps, activityId, options)
-    +classifyTarget(target, observed)
+    +createSheetsExporter(deps)
+    　preview(activityId)
+    　run(activityId, { editsPaused })
+    　latest(activityId)
+    +classifyTarget(target, { sheet, value })
   }
   class "export-records.js" as RecordsModule <<module>> {
-    +startRun(db, activityId, isActive)
+    +startRun(db, clock, activityId)
     +recordItems(db, exportId, items)
-    +finishRun(db, exportId, outcome, errorCode)
-    +latestExport(db, activityId, isActive)
+    +updateItems(db, exportId, updates)
+    +finishRun(db, clock, exportId, outcome, errorCode)
+    +abandonRun(db, clock, exportId, errorCode)
+    +readExport(db, exportId)
+    +latestExport(db, clock, activityId, isActive)
   }
   class ResultView <<view>> {
-    activity : { id, mode, status }
+    activity : { id, mode, status, closedAt }
     units : UnitResult[]
   }
   class UnitResult <<view>> {
+    id : INTEGER
+    kind : SINGLE | GROUP
     label : Q:題號 | G:題組代號
+    position : INTEGER
     questions : { key }[]
     noAnswer : boolean
     entries : ResultEntry[]
@@ -169,6 +178,7 @@ end note
 
 note bottom of SheetExport
   同一活動最多一筆 RUNNING（部分唯一索引＋程序內互斥）。
+  RUNNING 若且唯若 finished_at 為 NULL（CHECK）。
   中斷而遺留的 RUNNING，在下次讀取或寫回時改為 UNKNOWN，
   其中尚未確認的 PENDING 題目也改為 UNKNOWN（待核對）。
 end note

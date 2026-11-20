@@ -49,7 +49,10 @@ StudentUI -> Router : GET /api/student/results
 Router -> Router : requireGroupSession；所屬活動須為 CLOSED\n（結束前一律拒絕，不回傳其他組資料）
 Router -> Results : readResults(db, activityId)
 Router --> StudentUI : 同一份 ResultView
-note over TeacherUI, StudentUI : 答案與組名只以 textContent 呈現
+note over TeacherUI, StudentUI
+  答案與組名只以 textContent 呈現。
+  重新整理頁面時，teacher-activity（已結束）與 student-activity-closed 事件同樣觸發載入。
+end note
 
 == 下載 CSV ==
 Teacher -> TeacherUI : 下載 CSV
@@ -58,5 +61,5 @@ Router -> Router : requireTeacher；活動須為 CLOSED（學生一律拒絕）
 Router -> Results : readResults(db, id)
 Router -> Csv : buildResultsCsv(view)
 Csv -> Csv : 每筆受理依題展開；無人作答題一列；\n欄位轉義；使用者輸入欄位加公式防護
-Router --> TeacherUI : text/csv（UTF-8 BOM、CRLF）
+Router --> TeacherUI : text/csv; charset=utf-8（UTF-8 BOM、CRLF）\nContent-Disposition: attachment; filename="results-<id>.csv"
 @enduml

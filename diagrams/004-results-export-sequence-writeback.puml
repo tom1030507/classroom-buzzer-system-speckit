@@ -18,7 +18,7 @@ participant "Google Sheets API" as Sheets
 Teacher -> UI : 預覽寫回
 UI -> Router : POST /api/teacher/activities/:id/sheets-export/preview
 Router -> Router : requireTeacher、requireMutation；活動須為 CLOSED
-Router -> Export : previewExport
+Router -> Export : exporter.preview(activityId)
 Export -> Db : listWinningAnswers → 勝出答案與目標格（題組各題各一格）
 Export -> Gateway : readTargets(spreadsheetId, targets)
 Gateway -> Sheets : 工作表屬性與合併格（以 sheet_id 識別）
@@ -31,7 +31,8 @@ Export --> UI : 題號、勝出組、答案、目標（目前工作表名稱＋�
 Teacher -> UI : 勾選「已暫停其他人編輯」，按寫回
 UI -> Router : POST /api/teacher/activities/:id/sheets-export { editsPaused: true }
 Router -> Router : requireTeacher、requireMutation；CLOSED；editsPaused 必須為 true
-Router -> Export : runExport
+Router -> Export : exporter.run(activityId, { editsPaused })
+Export -> Db : listWinningAnswers（須為 CLOSED；沒有勝出答案 → 409 NOTHING_TO_EXPORT）
 Export -> Export : 取得同活動互斥鎖（進行中 → 409 EXPORT_IN_PROGRESS）
 Export -> Records : startRun
 group withTransaction
@@ -39,12 +40,14 @@ group withTransaction
 end
 Export -> Gateway : readTargets（寫入前再核對一次）
 Gateway -> Sheets : 讀取目前的值與結構
-Export -> Export : classifyTarget
-alt 有任一衝突
-  Export -> Records : 衝突題 CONFLICT（含原因）、其餘 SKIPPED；run = CONFLICT
+alt 讀取失敗（權限不足、找不到、逾時等）
+  Export -> Records : 逐題 FAILED（錯誤代碼）；run = FAILED，未呼叫寫入
+else 有任一衝突
+  Export -> Export : classifyTarget
+  Export -> Records : 衝突題 CONFLICT（含原因）、可寫入題 SKIPPED、\n已是相同內容題 ALREADY_PRESENT；run = CONFLICT
   Export --> UI : 整批停止、沒有寫入任何格子；\n提示恢復原結構或另建活動重新匯入
 else 全部可寫入或已是相同內容
-  Export -> Records : 已是相同內容 → ALREADY_PRESENT；待寫入 → PENDING
+  Export -> Records : 已是相同內容 → ALREADY_PRESENT；待寫入 → PENDING\n（沒有待寫入的題目時不呼叫寫入，run = SUCCEEDED）
   Export -> Gateway : writeCells（單一批次；只改 userEnteredValue.stringValue，等同 RAW）
   Gateway -> Sheets : spreadsheets:batchUpdate（updateCells）
   alt 明確失敗（權限不足、找不到試算表、配額、憑證）
@@ -60,7 +63,13 @@ else 全部可寫入或已是相同內容
   end
   Export --> UI : 逐題結果，不誤報整批成功；提醒恢復其他人的編輯
 end
-Export -> Export : 釋放互斥鎖
+Export -> Export : 釋放互斥鎖（非預期的錯誤：abandonRun 將 PENDING 改為 UNKNOWN 後回應 500）
+
+== 重新整理頁面 ==
+UI -> Router : GET /api/teacher/activities/:id/sheets-export
+Router -> Export : exporter.latest(activityId)
+Export -> Records : latestExport：不在寫回中的 RUNNING 先改為 UNKNOWN（INTERRUPTED）
+Export --> UI : 最近一次寫回紀錄或 null
 
 == 重試或重複寫回 ==
 note over Teacher, Sheets
