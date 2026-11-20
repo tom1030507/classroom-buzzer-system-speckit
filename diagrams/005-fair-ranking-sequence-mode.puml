@@ -7,7 +7,7 @@ autonumber
 
 actor "老師" as Teacher
 participant "教師頁面（分頁 1）\nmode-select.js" as TeacherUI
-participant "教師頁面（分頁 2）\nrealtime-buzzer.js" as TeacherUI2
+participant "教師頁面（分頁 2）\nrealtime-buzzer.js・mode-select.js" as TeacherUI2
 participant "學生頁面\nmode-info.js" as StudentUI
 participant "SF-05\nrouter.js・modes.js" as Mode
 participant "SF-03\nrouter.js・state.js\nevents.js・snapshots.js" as Buzzer
@@ -38,7 +38,7 @@ loop 每 250 ms，內容有變化才推送
   Buzzer --> StudentUI : event: snapshot { activity: { mode: FAIR, status: PREPARING } }\n（只含自己組別的資料）
 end
 StudentUI -> StudentUI : realtime-buzzer.js 在 status 或 mode 改變時派發 student-activity-phase；\nmode-info.js 顯示「公平模式」與規則說明（固定文字，不含其他組資訊）
-TeacherUI2 -> TeacherUI2 : 更新模式標示
+TeacherUI2 -> TeacherUI2 : 更新階段標示與模式選擇\n（teacher-activity-phase）
 
 == 改選與開啟並行（同一序列，結果只有一種） ==
 Teacher -> TeacherUI : 改選模式（請求 A）

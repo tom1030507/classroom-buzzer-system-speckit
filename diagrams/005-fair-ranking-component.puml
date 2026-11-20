@@ -53,7 +53,7 @@ TeacherMode ..> ModeRules
 StudentMode ..> ModeRules
 ResultsUI ..> ModeRules
 TeacherMode ..> PageEvents : 監聽活動與階段事件
-StudentMode ..> PageEvents : 監聽 student-activity・\nstudent-activity-phase
+StudentMode ..> PageEvents : 監聽 student-activity、\nstudent-activity-phase、\nstudent-activity-closed
 TeacherMode --> Router : POST mode { mode }
 PageEvents --> State : POST open／close
 PageEvents --> Snapshots : SSE snapshot\n（含 activity.mode，老師與學生各自過濾）
