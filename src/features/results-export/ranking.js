@@ -1,3 +1,5 @@
+import { rankFair } from '../fair-ranking/fair-ranking.js';
+
 /**
  * Final-rank strategies by activity mode (specs/004-results-export/contracts/ranking.md).
  * A strategy is a synchronous pure function: it receives the units in their fixed order,
@@ -12,6 +14,6 @@ export function rankSpeed(units) {
     .map(({ submissionId }, index) => ({ submissionId, unitId, finalRank: index + 1 })));
 }
 
-// SF-05 adds FAIR (spec.md §4). Until then a fair activity cannot be closed: saved results
-// can never be changed, so they must not be stored with the speed rule.
-export const RANKERS = Object.freeze({ SPEED: rankSpeed });
+// FAIR is provided by SF-05 (spec.md §4). Saved results can never be changed, so a mode without
+// an entry here is refused when the activity closes (saveFinalResults) rather than ranked wrongly.
+export const RANKERS = Object.freeze({ SPEED: rankSpeed, FAIR: rankFair });

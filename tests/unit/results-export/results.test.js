@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { openDatabase } from '../../../src/db/connection.js';
 import { migrate } from '../../../src/db/migrate.js';
 import { transitionActivity } from '../../../src/features/realtime-buzzer/state.js';
-import { readResults } from '../../../src/features/results-export/results.js';
+import { readResults, saveFinalResults } from '../../../src/features/results-export/results.js';
 import { createFixedClock } from '../../../src/lib/time.js';
 import {
   closeActivity, insertActivity, insertGroup, insertGroupUnit, insertSingleUnit, insertSubmission, openActivity,
@@ -71,11 +71,61 @@ test('AC-11 saved results reject updates and deletes', (t) => {
   assert.equal(resultRows(db, activityId).length, 4);
 });
 
-test('a mode without a ranking cannot close, and the failed close leaves the activity open without results', (t) => {
-  const { db, deps, activityId } = prepareActivity(t, { mode: 'FAIR' });
-  assert.throws(() => transitionActivity(deps, activityId, 'CLOSED'), { status: 409, code: 'RANKING_UNAVAILABLE' });
-  assert.equal(statusOf(db, activityId), 'OPEN');
+/**
+ * AC-21: Alpha answers both units before Beta, so the fair rule puts Beta first in the second unit
+ * (Alpha already holds one win) while the acceptance order still has Alpha first.
+ */
+function prepareFairActivity(t) {
+  const db = openDatabase(':memory:');
+  migrate(db);
+  t.after(() => db.close());
+  const deps = { db, clock: createFixedClock(CLOSED_AT) };
+  const activityId = insertActivity(db, { mode: 'FAIR' });
+  const alpha = insertGroup(db, activityId, 'Alpha');
+  const beta = insertGroup(db, activityId, 'Beta');
+  const first = insertSingleUnit(db, activityId, { questionKey: 'Q1' });
+  const second = insertSingleUnit(db, activityId, { questionKey: 'Q2' });
+  openActivity(db, activityId);
+  const submit = (unit, groupId, acceptSeq, text) => insertSubmission(db, {
+    activityId, unitId: unit.unitId, groupId, acceptSeq, acceptedAt: at(acceptSeq),
+    answers: [{ questionId: unit.questionId, text }],
+  });
+  const submissions = {
+    alphaFirst: submit(first, alpha, 1, 'Alpha one'),
+    betaFirst: submit(first, beta, 2, 'Beta one'),
+    alphaSecond: submit(second, alpha, 3, 'Alpha two'),
+    betaSecond: submit(second, beta, 4, 'Beta two'),
+  };
+  return { db, deps, activityId, first, second, submissions };
+}
+
+test('FR-002 closing a fair activity saves the fair ranks and leaves the acceptance sequence alone', (t) => {
+  const { db, deps, activityId, first, second, submissions: s } = prepareFairActivity(t);
+  assert.deepEqual(transitionActivity(deps, activityId, 'CLOSED'), { id: activityId, mode: 'FAIR', status: 'CLOSED' });
+  assert.deepEqual(resultRows(db, activityId), [
+    [s.alphaFirst, first.unitId, 1, 1],
+    [s.betaFirst, first.unitId, 2, 0],
+    [s.betaSecond, second.unitId, 1, 1],
+    [s.alphaSecond, second.unitId, 2, 0],
+  ]);
+  const sequences = db.prepare('SELECT accept_seq FROM submissions WHERE activity_id = ? ORDER BY id').all(activityId);
+  assert.deepEqual(sequences.map((row) => row.accept_seq), [1, 2, 3, 4]);
+});
+
+test('FR-005 a failure while saving fair results rolls the whole close back', (t) => {
+  const { db, deps, activityId } = prepareFairActivity(t);
+  db.exec('DROP TABLE results');
+  assert.throws(() => transitionActivity(deps, activityId, 'CLOSED'));
+  const row = db.prepare('SELECT status, closed_at FROM activities WHERE id = ?').get(activityId);
+  assert.equal(row.status, 'OPEN');
+  assert.equal(row.closed_at, null);
+});
+
+test('a mode without a registered ranking is refused before anything is saved', (t) => {
+  const { db, activityId } = prepareFairActivity(t);
+  assert.throws(() => saveFinalResults(db, activityId, 'UNKNOWN'), { status: 409, code: 'RANKING_UNAVAILABLE' });
   assert.deepEqual(resultRows(db, activityId), []);
+  assert.equal(statusOf(db, activityId), 'OPEN');
 });
 
 test('FR-003 the result view lists every unit in order with ranks, accept order and answers, and no internal ids', (t) => {

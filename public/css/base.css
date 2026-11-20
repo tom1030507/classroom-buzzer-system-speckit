@@ -149,8 +149,25 @@ form {
   gap: 0.5rem;
 }
 
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="radio"] {
   width: auto;
+}
+
+/* SF-05 mode selection and the rule description (shared by the teacher, student and result pages). */
+fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.mode-rule {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.mode-rule p {
+  margin: 0.25rem 0;
 }
 
 .buzzer-monitor-scroll {

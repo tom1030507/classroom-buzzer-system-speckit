@@ -1,0 +1,116 @@
+@startuml 005-fair-ranking-class
+title SF-05 公平排序 — Class（spec.md §4、§6；FR-10；AC-21～AC-23）
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 260
+hide empty methods
+
+package "沿用的資料表（000-base-schema；SF-05 不新增 migration）" {
+  class Activity <<activities>> {
+    id : TEXT <<PK>>
+    mode : SPEED | FAIR = SPEED
+    status : PREPARING | OPEN | CLOSED
+  }
+  class Unit <<units>> {
+    id : INTEGER <<PK>>
+    kind : SINGLE | GROUP
+    group_code : TEXT?
+    position : INTEGER
+  }
+  class StudentGroup <<student_groups>> {
+    id : INTEGER <<PK>>
+    name : TEXT
+  }
+  class Submission <<submissions>> {
+    id : INTEGER <<PK>>
+    unit_id : INTEGER <<FK>>
+    group_id : INTEGER <<FK>>
+    accept_seq : INTEGER
+  }
+  class Result <<results>> {
+    submission_id : INTEGER <<PK, FK>>
+    unit_id : INTEGER <<FK>>
+    final_rank : INTEGER
+    is_winner : BOOLEAN
+  }
+}
+
+package "src/features/fair-ranking/（SF-05）" #E8F4FF {
+  class "fair-ranking.js" as FairRankingModule <<module>> {
+    +rankFair(units : RankingUnit[]) : FinalRank[]
+  }
+  class "modes.js" as ModesModule <<module>> {
+    +MODES : [SPEED, FAIR]
+    +selectMode(deps, activityId, mode) : Activity
+  }
+  class "router.js" as RouterModule <<module>> {
+    +createFairRankingRouter(deps)
+    　POST /teacher/activities/:activityId/mode { mode }
+  }
+  class RankingUnit <<input>> {
+    unitId : INTEGER
+    submissions : RankingSubmission[]
+  }
+  class RankingSubmission <<input>> {
+    submissionId : INTEGER
+    groupId : INTEGER
+    acceptSeq : INTEGER
+  }
+  class FinalRank <<output>> {
+    submissionId : INTEGER
+    unitId : INTEGER
+    finalRank : INTEGER
+  }
+  class WinCounts <<暫存，不保存>> {
+    groupId → 此前已勝出的單位數
+  }
+}
+
+class "results-export/ranking.js（SF-04；SF-05 加入 FAIR）" as RankingModule <<module>> {
+  +RANKERS : { SPEED : rankSpeed, FAIR : rankFair }
+  +rankSpeed(units) : FinalRank[]
+}
+
+class "public/js/mode-rules.js（SF-05，前端）" as ModeRules <<module>> {
+  +modeLabel : { SPEED : 速度模式, FAIR : 公平模式 }
+  +modeRule : { SPEED : string[], FAIR : string[] }（固定段落；公平模式附範例）
+  +renderModeRule(mode) : HTMLElement
+}
+
+Activity "1" *-- "0..*" Unit
+Unit "1" -- "0..*" Submission
+StudentGroup "1" -- "0..*" Submission
+Submission "1" -- "0..1" Result : 結束時保存
+
+RankingUnit "1" *-- "0..*" RankingSubmission
+FairRankingModule ..> RankingUnit : 輸入（依 units.position 排列）
+FairRankingModule ..> FinalRank : 輸出
+FairRankingModule ..> WinCounts : 計算中使用
+RankingModule ..> FairRankingModule : RANKERS.FAIR
+ModesModule ..> Activity : UPDATE mode
+RouterModule ..> ModesModule
+ModeRules ..> Activity : 依 mode 顯示
+
+note right of FairRankingModule
+  spec.md §4（FR-10）：
+  1. 所有組的勝出次數從 0 起，依 units.position 逐一處理；
+  2. 單位內依（此前勝出次數少→多、acceptSeq 小→大）排序，
+     finalRank 從 1 起連續且不重複；
+  3. 第 1 名勝出，其組勝出次數 +1；題組單位一筆送出只算一次；
+     無人送出的單位不增加；不採用跨活動歷史。
+  同步純函式：不讀寫資料庫，不 await。
+end note
+
+note bottom of Activity
+  mode 只在 PREPARING 可改：API 回 409 INVALID_PHASE，
+  trigger activities_mode_locked_after_open 為最後防線。
+  mode 不是 SPEED 或 FAIR：400 INVALID_MODE。
+end note
+
+note bottom of Result
+  final_rank 與 submissions.accept_seq 分開保存，公平模式下可以不同。
+  UNIQUE (unit_id, final_rank)；is_winner = (final_rank = 1)；
+  只在 CLOSED 新增，之後不可修改或刪除（base trigger）。
+  結果頁、寫回與 CSV 只讀這份資料與 activities.mode。
+end note
+@enduml
