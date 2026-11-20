@@ -8,7 +8,7 @@ SF-05 只新增一個端點；學生沒有新端點，學生取得模式的方�
 
 ### `POST /api/teacher/activities/:activityId/mode`
 
-- Body：`{ "mode": "SPEED" }` 或 `{ "mode": "FAIR" }`；body 上限 8 kB，不接受其他欄位。
+- Body：`{ "mode": "SPEED" }` 或 `{ "mode": "FAIR" }`；沿用全域的 JSON 解析（上限 100 kB），不接受其他欄位。
 - 200：更新後的活動
 
   ```json

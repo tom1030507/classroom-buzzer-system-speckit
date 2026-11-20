@@ -35,8 +35,10 @@
 ## R4. 模式選擇端點
 
 - **Decision**：`POST /api/teacher/activities/:activityId/mode`，body `{ "mode": "SPEED" | "FAIR" }`。
-  中介層順序與 SF-03 的 `open`／`close` 相同：`requireTeacher` → `requireMutation`（Origin＋CSRF）→ JSON 解析（8 kB）
-  → 驗證模式值（400）。`selectMode` 在 `withTransaction` 內 `getActivity`（404）、確認 `PREPARING`（409）、
+  路由掛在 `app.js` 的全域 `express.json({ limit: '100kb' })` 之後，`req.body` 已解析，中介層順序為
+  `requireTeacher` → `requireMutation`（Origin＋CSRF）→ 驗證 body 與模式值（400）。SF-03 的 router 刻意掛在全域解析器
+  之前，是因為受理送出的 body 上限依單位而不同，必須先驗證身分再解析；本端點的 body 只有 `{ mode }`，沿用全域上限即可，
+  不另設 `json()`。`selectMode` 在 `withTransaction` 內 `getActivity`（404）、確認 `PREPARING`（409）、
   `UPDATE activities SET mode`，回傳更新後的活動。
 - **Rationale**：檢查與更新在同一個 `BEGIN IMMEDIATE` 交易內，與 `transitionActivity`（開啟、結束）序列化，
   所以改選與開啟並行時只會有一種結果（AC-23）。基礎 schema 的 `activities_mode_locked_after_open` trigger 是最後防線。
