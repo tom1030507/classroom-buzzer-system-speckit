@@ -4,7 +4,9 @@ import { apiNotFound, errorHandler } from './http/errors.js';
 import { noStore, securityHeaders } from './http/security-headers.js';
 import { createActivityGroupsRouter } from './features/activity-groups/router.js';
 import { createSheetsImportRouter } from './features/sheets-import/router.js';
+import { createSheetsGateway } from './features/sheets-import/gateway.js';
 import { createRealtimeBuzzerRouter } from './features/realtime-buzzer/router.js';
+import { createResultsExportRouter } from './features/results-export/router.js';
 import { systemClock } from './lib/time.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
@@ -22,7 +24,10 @@ const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
  * }} deps
  */
 export function createApp({ db, config, logger, clock = systemClock, sheetsGateway }) {
-  const deps = Object.freeze({ db, config, logger, clock, sheetsGateway });
+  // SF-02 and SF-04 share one gateway, so one access token cache serves both. Credentials
+  // are only read on the first Google request.
+  const gateway = sheetsGateway ?? createSheetsGateway({ credentialsFile: config.googleCredentialsFile, clock });
+  const deps = Object.freeze({ db, config, logger, clock, sheetsGateway: gateway });
   const app = express();
   app.disable('x-powered-by');
   app.use(securityHeaders());
@@ -40,7 +45,7 @@ export function createApp({ db, config, logger, clock = systemClock, sheetsGatew
   // 每個子功能在 src/features/<slug>/ 匯出 router factory，並在此以一行掛載，例如：
   api.use(createActivityGroupsRouter(deps));
   api.use(createSheetsImportRouter(deps));
-  //   api.use(createResultsExportRouter(deps));    // SF-04 004-results-export
+  api.use(createResultsExportRouter(deps));
   //   api.use(createFairRankingRouter(deps));      // SF-05 005-fair-ranking
 
   app.use('/api', api);

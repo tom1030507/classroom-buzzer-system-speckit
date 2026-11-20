@@ -28,7 +28,7 @@ description: "SF-04 結果與匯出的任務清單"
 
 **Purpose**: 掛載 SF-04 router、共用 Sheets gateway
 
-- [ ] T001 建立 `src/features/results-export/router.js`，匯出回傳空 Express `Router` 的 `createResultsExportRouter(deps)`，並在 `src/app.js` 以 `api.use(createResultsExportRouter(deps))` 取代 SF-04 的註解行（掛在 `createSheetsImportRouter` 之後）；同時讓 `createApp` 在未注入 `sheetsGateway` 時，以 `createSheetsGateway({ credentialsFile: config.googleCredentialsFile, clock })` 建立一個實例放進 `deps`，供 SF-02 與 SF-04 共用（research R10）
+- [X] T001 建立 `src/features/results-export/router.js`，匯出回傳空 Express `Router` 的 `createResultsExportRouter(deps)`，並在 `src/app.js` 以 `api.use(createResultsExportRouter(deps))` 取代 SF-04 的註解行（掛在 `createSheetsImportRouter` 之後）；同時讓 `createApp` 在未注入 `sheetsGateway` 時，以 `createSheetsGateway({ credentialsFile: config.googleCredentialsFile, clock })` 建立一個實例放進 `deps`，供 SF-02 與 SF-04 共用（research R10）
 
 ---
 
