@@ -1,5 +1,5 @@
 @startuml system-class
-title 課堂搶答系統 — 共用資料模型（spec.md §6；src/db/migrations/000-base-schema.sql）
+title 課堂搶答系統 — 共用資料模型（spec.md §6；src/db/migrations/000-base-schema.sql 與子功能 migration）
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 skinparam wrapWidth 260
@@ -87,10 +87,19 @@ class Session <<SF-01 新增>> #line.dashed {
   角色、CSRF token
 }
 
-class ExportRecord <<SF-04 新增>> #line.dashed {
-  由 SF-04 設計：
-  逐題目標、寫入內容、
-  結果（成功／衝突／失敗／待核對）
+class SheetExport <<sheet_exports（SF-04）>> {
+  id : INTEGER <<PK>>
+  activity_id : TEXT <<FK>>
+  started_at : UTC ISO 8601
+  finished_at : UTC ISO 8601?
+  outcome : RUNNING | SUCCEEDED | CONFLICT | FAILED | UNKNOWN
+}
+
+class SheetExportItem <<sheet_export_items（SF-04）>> {
+  question_id : INTEGER <<FK>>
+  目標格（試算表、工作表、列、欄）
+  content : TEXT
+  status : 成功／已是相同內容／衝突／未寫入／失敗／待核對
 }
 
 Activity "1" *-- "0..*" StudentGroup
@@ -101,7 +110,9 @@ StudentGroup "1" -- "0..*" Submission
 Submission "1" *-- "1..*" SubmissionAnswer
 SubmissionAnswer "0..*" --> "1" Question
 Submission "1" -- "0..1" Result
-Activity "1" -- "0..*" ExportRecord
+Activity "1" -- "0..*" SheetExport
+SheetExport "1" *-- "1..*" SheetExportItem
+SheetExportItem "0..*" --> "1" Question : 目標格
 Session "0..*" ..> "0..1" Activity : 老師工作階段
 Session "1" ..> "0..1" StudentGroup : 每組一個有效工作階段
 Activity ..> ActivityStatus

@@ -103,6 +103,8 @@ function updateSnapshot(state, snapshot) {
 
 function renderMonitor(state) {
   if (!state.snapshot) return;
+  // Once closed, SF-04's fixed results (#results-export) replace the live monitor.
+  monitor.hidden = state.activity.status === 'CLOSED';
   const { groups, units } = state.snapshot;
   empty.hidden = units.length > 0;
   const currentIds = new Set(units.map((unit) => unit.id));

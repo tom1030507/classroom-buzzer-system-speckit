@@ -1,0 +1,93 @@
+@startuml 004-results-export-component
+title SF-04 結果與匯出 — Component（FR-06、FR-07、FR-09；AC-11～AC-14、AC-17、AC-19、AC-20）
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam wrapWidth 240
+
+actor "老師" as Teacher
+actor "學生（各組）" as Student
+
+package "瀏覽器：HTML／CSS／原生 JavaScript" {
+  package "SF-04（本功能）" #E8F4FF {
+    [教師結果與匯出\npublic/teacher/results-export.js\n結果表・寫回預覽與確認・下載 CSV] as TeacherResults
+    [學生結果\npublic/student/results-export.js] as StudentResults
+    [共用結果表\npublic/js/results-view.js] as ResultsView
+  }
+  package "沿用" {
+    [SF-01／SF-03 頁面模組\nactivity-groups.js・realtime-buzzer.js\n（teacher-activity、teacher-activity-phase、\nstudent-activity、student-activity-closed 事件）] as PageEvents
+    [共用前端 public/js/api.js・dom.js\n（使用者輸入只以 textContent 呈現）] as WebShared
+  }
+}
+
+node "Node.js 伺服器（只綁定 127.0.0.1）" {
+  [src/app.js\n建立共用 gateway・掛載 router] as App
+  package "src/features/results-export/（SF-04）" #E8F4FF {
+    [router.js\ncreateResultsExportRouter] as Router
+    [results.js\nsaveFinalResults・readResults\nlistWinningAnswers] as Results
+    [ranking.js\nrankSpeed・RANKERS\n（SF-05 加入 FAIR）] as Ranking
+    [csv.js\nbuildResultsCsv] as Csv
+    [sheets-export.js\ncreateSheetsExporter：preview・run・latest\nclassifyTarget・同活動互斥] as Export
+    [export-records.js\n逐題寫回紀錄・中斷復原] as Records
+  }
+  package "沿用其他子功能（只呼叫匯出的函式）" {
+    [SF-01 activity-groups/sessions.js\nrequireTeacher・requireGroupSession\nrequireMutation] as Sessions
+    [SF-01 activity-groups/activities.js\ngetActivity] as Activities
+    [SF-03 realtime-buzzer/state.js\ntransitionActivity（結束交易）] as State
+    [SF-02 sheets-import/gateway.js\n服務帳戶授權・HTTPS\n（SF-04 新增 readTargets、writeCells）] as Gateway
+    [SF-02 sheets-import/parser.js\ncellAddress] as Parser
+  }
+  [src/db/transaction.js\nwithTransaction] as Tx
+}
+
+database "SQLite" {
+  [results\n（000-base-schema；\n004-01 補齊舊活動）] as ResultsTable
+  [sheet_exports・sheet_export_items\n（004-02 migration）] as ExportTables
+  [activities・units・questions\nstudent_groups・submissions\nsubmission_answers（唯讀）] as SourceTables
+}
+cloud "Google Sheets API\n（老師的雲端試算表）" as SheetsApi
+
+Teacher --> TeacherResults
+Student --> StudentResults
+TeacherResults ..> PageEvents : 監聽活動與階段事件
+StudentResults ..> PageEvents : 監聽活動與結束事件
+TeacherResults ..> ResultsView
+StudentResults ..> ResultsView
+ResultsView ..> WebShared
+TeacherResults ..> WebShared
+TeacherResults --> Router : GET 結果・POST 寫回預覽／寫回\nGET 寫回紀錄・GET results.csv
+StudentResults --> Router : GET /api/student/results
+
+App --> Router
+App --> Gateway : 建立一次，SF-02 與 SF-04 共用
+Router ..> Sessions : 教師／組別權限、Origin＋CSRF
+Router --> Results
+Router --> Csv
+Router --> Export
+State --> Results : saveFinalResults（同一交易）
+State ..> Tx
+Results --> Ranking
+Results ..> Activities
+Results --> ResultsTable
+Results --> SourceTables
+Export --> Results : listWinningAnswers（勝出答案與目標格）
+Export ..> Activities
+Export ..> Parser
+Export --> Records
+Export --> Gateway : readTargets・writeCells
+Records ..> Parser
+Records --> ExportTables
+Records ..> Tx
+Gateway --> SheetsApi : HTTPS（Sheets 讀寫 scope）
+
+note bottom of Ranking
+  速度模式：單位內依 accept_seq 排名，第 1 名勝出。
+  公平模式由 SF-05 加入 RANKERS；在那之前拒絕
+  以速度規則保存公平模式結果（FR-007）。
+end note
+
+note bottom of Export
+  寫入前重新讀取並核對原標記；任一衝突整批停止。
+  寫入後回讀核對；不確定時記為「待核對」。
+end note
+@enduml

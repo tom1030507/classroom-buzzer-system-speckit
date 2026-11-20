@@ -1,0 +1,80 @@
+@startuml 004-results-export-sequence-writeback
+title SF-04 結果與匯出 — Sequence：寫回原 Google Sheets 的預覽、衝突與重試（FR-07；AC-12～AC-14、AC-17、AC-02）
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam wrapWidth 320
+autonumber
+
+actor "老師" as Teacher
+participant "教師頁面\nresults-export.js" as UI
+participant "SF-04\nrouter.js" as Router
+participant "sheets-export.js" as Export
+participant "export-records.js" as Records
+participant "gateway.js\n（SF-02；SF-04 擴充）" as Gateway
+database "SQLite" as Db
+participant "Google Sheets API" as Sheets
+
+== 預覽（不修改試算表） ==
+Teacher -> UI : 預覽寫回
+UI -> Router : POST /api/teacher/activities/:id/sheets-export/preview
+Router -> Router : requireTeacher、requireMutation；活動須為 CLOSED
+Router -> Export : exporter.preview(activityId)
+Export -> Db : listWinningAnswers → 勝出答案與目標格（題組各題各一格）
+Export -> Gateway : readTargets(spreadsheetId, targets)
+Gateway -> Sheets : 工作表屬性與合併格（以 sheet_id 識別）
+Gateway -> Sheets : 目標格的 userEnteredValue（getByDataFilter）
+Gateway --> Export : 目前的值與結構
+Export -> Export : classifyTarget：可寫入（仍是原標記）／已是相同內容／\n衝突（工作表不存在、超出範圍、合併、內容已改）
+Export --> UI : 題號、勝出組、答案、目標（目前工作表名稱＋格位）、狀態；\n無人作答題標示不寫入
+
+== 寫回 ==
+Teacher -> UI : 勾選「已暫停其他人編輯」，按寫回
+UI -> Router : POST /api/teacher/activities/:id/sheets-export { editsPaused: true }
+Router -> Router : requireTeacher、requireMutation；CLOSED；editsPaused 必須為 true
+Router -> Export : exporter.run(activityId, { editsPaused })
+Export -> Db : listWinningAnswers（須為 CLOSED；沒有勝出答案 → 409 NOTHING_TO_EXPORT）
+Export -> Export : 取得同活動互斥鎖（進行中 → 409 EXPORT_IN_PROGRESS）
+Export -> Records : startRun
+group withTransaction
+  Records -> Db : 中斷遺留的 RUNNING 改為 UNKNOWN；\nINSERT sheet_exports（每活動最多一筆 RUNNING）
+end
+Export -> Gateway : readTargets（寫入前再核對一次）
+Gateway -> Sheets : 讀取目前的值與結構
+alt 讀取失敗（權限不足、找不到、逾時等）
+  Export -> Records : 逐題 FAILED（錯誤代碼）；run = FAILED，未呼叫寫入
+else 有任一衝突
+  Export -> Export : classifyTarget
+  Export -> Records : 衝突題 CONFLICT（含原因）、可寫入題 SKIPPED、\n已是相同內容題 ALREADY_PRESENT；run = CONFLICT
+  Export --> UI : 整批停止、沒有寫入任何格子；\n提示恢復原結構或另建活動重新匯入
+else 全部可寫入或已是相同內容
+  Export -> Records : 已是相同內容 → ALREADY_PRESENT；待寫入 → PENDING\n（沒有待寫入的題目時不呼叫寫入，run = SUCCEEDED）
+  Export -> Gateway : writeCells（單一批次；只改 userEnteredValue.stringValue，等同 RAW）
+  Gateway -> Sheets : spreadsheets:batchUpdate（updateCells）
+  alt 明確失敗（權限不足、找不到試算表、配額、憑證）
+    Export -> Records : PENDING → FAILED（錯誤代碼）；run = FAILED
+  else 成功，或結果不確定（逾時、斷線、Google 5xx）
+    Export -> Gateway : readTargets（回讀核對）
+    alt 回讀成功
+      Export -> Export : 內容一致 → WRITTEN；仍是原標記 → FAILED；\n其他內容 → CONFLICT（不覆寫）
+      Export -> Records : 逐題結果；全部 WRITTEN／ALREADY_PRESENT 才是 SUCCEEDED
+    else 回讀也失敗
+      Export -> Records : PENDING → UNKNOWN（待核對）；run = UNKNOWN
+    end
+  end
+  Export --> UI : 逐題結果，不誤報整批成功；提醒恢復其他人的編輯
+end
+Export -> Export : 釋放互斥鎖（非預期的錯誤：abandonRun 將 PENDING 改為 UNKNOWN 後回應 500）
+
+== 重新整理頁面 ==
+UI -> Router : GET /api/teacher/activities/:id/sheets-export
+Router -> Export : exporter.latest(activityId)
+Export -> Records : latestExport：不在寫回中的 RUNNING 先改為 UNKNOWN（INTERRUPTED）
+Export --> UI : 最近一次寫回紀錄或 null
+
+== 重試或重複寫回 ==
+note over Teacher, Sheets
+  重新預覽並寫回時同樣先讀取線上值：已是相同內容 → 視為成功、不重寫；
+  仍是原標記 → 寫入；被外部改成其他內容 → 衝突、不覆寫（AC-14）。
+  寫回只讀取結果，不會修改 results。
+end note
+@enduml

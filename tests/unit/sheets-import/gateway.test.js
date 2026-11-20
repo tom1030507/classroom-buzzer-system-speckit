@@ -110,3 +110,98 @@ test('AC-03 a deleted sheet is an explicit error instead of silently importing a
     fetchImpl: async (url) => isToken(url) ? tokenReply() : Response.json({ sheets: [{ properties: { sheetId: 0, title: 'first', sheetType: 'GRID' } }] }) });
   await assert.rejects(gateway.readSheets('valid-id', [0, 10]), { code: 'SHEETS_SHEET_UNAVAILABLE' });
 });
+
+// SF-04 write-back: the gateway re-reads target cells and writes plain text (research R4, R5).
+async function recordingGateway(t, reply) {
+  const calls = [];
+  const gateway = createSheetsGateway({ credentialsFile: await credentials(t), clock: createFixedClock(),
+    fetchImpl: async (url, options) => {
+      calls.push({ url: new URL(url), options });
+      if (isToken(url)) return tokenReply();
+      return reply(new URL(url), options);
+    } });
+  return { gateway, calls };
+}
+
+const META_FIELDS = 'sheets(properties(sheetId,title,sheetType,gridProperties),merges)';
+const CELL_FIELDS = 'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue))))';
+const cellRange = (sheetId, row, column) => ({
+  sheetId, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: column, endColumnIndex: column + 1,
+});
+
+test('SF-04 readTargets reads sheet structure first, then only target cells that still exist', async (t) => {
+  const merges = [{ startRowIndex: 8, endRowIndex: 9, endColumnIndex: 2 }];
+  const { gateway, calls } = await recordingGateway(t, (url) => {
+    if (url.pathname.endsWith(':getByDataFilter')) {
+      return Response.json({ sheets: [{ properties: { sheetId: 7 }, data: [
+        { startRow: 2, startColumn: 1, rowData: [{ values: [{ userEnteredValue: { stringValue: '{{Q:1}}' } }] }] },
+        { startRow: 4, startColumn: 3 },
+      ] }] });
+    }
+    return Response.json({ sheets: [
+      { properties: { sheetId: 7, title: '題目', sheetType: 'GRID', gridProperties: { rowCount: 10, columnCount: 5 } }, merges },
+      { properties: { sheetId: 9, title: '圖表', sheetType: 'OBJECT' } },
+    ] });
+  });
+  const observed = await gateway.readTargets('spreadsheet-1', [
+    { sheetId: 7, rowIndex: 2, columnIndex: 1 },
+    { sheetId: 7, rowIndex: 4, columnIndex: 3 },
+    { sheetId: 7, rowIndex: 12, columnIndex: 0 },
+    { sheetId: 3, rowIndex: 0, columnIndex: 0 },
+  ]);
+  const sheet = { id: 7, title: '題目', rowCount: 10, columnCount: 5, merges };
+  assert.deepEqual(observed, [
+    { sheet, value: { stringValue: '{{Q:1}}' } },
+    { sheet, value: null },
+    { sheet, value: null },
+    { sheet: null, value: null },
+  ]);
+  assert.equal(calls.length, 3);
+  const [, metadata, cells] = calls;
+  assert.equal(metadata.url.pathname, '/v4/spreadsheets/spreadsheet-1');
+  assert.equal(metadata.url.searchParams.get('fields'), META_FIELDS);
+  assert.equal(cells.url.pathname, '/v4/spreadsheets/spreadsheet-1:getByDataFilter');
+  assert.equal(cells.url.searchParams.get('fields'), CELL_FIELDS);
+  assert.deepEqual(JSON.parse(cells.options.body), { dataFilters: [
+    { gridRange: cellRange(7, 2, 1) }, { gridRange: cellRange(7, 4, 3) },
+  ] });
+});
+
+test('SF-04 readTargets does not request cells when no target can still be read', async (t) => {
+  const { gateway, calls } = await recordingGateway(t, () => Response.json({ sheets: [
+    { properties: { sheetId: 0, title: 'A', sheetType: 'GRID', gridProperties: { rowCount: 1, columnCount: 1 } } },
+  ] }));
+  assert.deepEqual(await gateway.readTargets('spreadsheet-1', [{ sheetId: 0, rowIndex: 3, columnIndex: 0 }]), [
+    { sheet: { id: 0, title: 'A', rowCount: 1, columnCount: 1, merges: [] }, value: null },
+  ]);
+  assert.equal(calls.length, 2);
+});
+
+test('SF-04 writeCells sends one atomic batchUpdate that only replaces each value with plain text', async (t) => {
+  const { gateway, calls } = await recordingGateway(t, () => Response.json({ spreadsheetId: 'spreadsheet-1' }));
+  await gateway.writeCells('spreadsheet-1', [
+    { sheetId: 7, rowIndex: 2, columnIndex: 1, text: '=1+1' },
+    { sheetId: 0, rowIndex: 0, columnIndex: 27, text: '第一行\n第二行' },
+  ]);
+  assert.equal(calls.length, 2);
+  const write = calls[1];
+  assert.equal(write.url.pathname, '/v4/spreadsheets/spreadsheet-1:batchUpdate');
+  assert.equal(write.url.searchParams.get('fields'), 'spreadsheetId');
+  assert.equal(write.options.method, 'POST');
+  const update = (range, stringValue) => ({ updateCells: {
+    range, rows: [{ values: [{ userEnteredValue: { stringValue } }] }], fields: 'userEnteredValue',
+  } });
+  assert.deepEqual(JSON.parse(write.options.body), { requests: [
+    update(cellRange(7, 2, 1), '=1+1'), update(cellRange(0, 0, 27), '第一行\n第二行'),
+  ] });
+});
+
+test('SF-04 writeCells reports Google refusals and timeouts with the shared error codes', async (t) => {
+  for (const [reply, code] of [
+    [() => Response.json({ error: { message: token } }, { status: 403 }), 'SHEETS_PERMISSION'],
+    [() => { throw new DOMException(token, 'TimeoutError'); }, 'SHEETS_TIMEOUT'],
+  ]) {
+    const { gateway } = await recordingGateway(t, reply);
+    await assert.rejects(gateway.writeCells('spreadsheet-1', [{ sheetId: 0, rowIndex: 0, columnIndex: 0, text: 'x' }]), { code });
+  }
+});

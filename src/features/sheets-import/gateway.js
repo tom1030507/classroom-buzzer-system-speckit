@@ -12,6 +12,13 @@ const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const LINK_PATTERN = /^\/spreadsheets\/(?:u\/\d+\/)?d\/([A-Za-z0-9_-]+)(?:\/|$)/;
 const LIST_FIELDS = 'sheets(properties(sheetId,title,sheetType))';
 const GRID_FIELDS = 'sheets(properties(sheetId,title,sheetType,gridProperties),merges,data(startRow,startColumn,rowData(values(userEnteredValue))))';
+const STRUCTURE_FIELDS = 'sheets(properties(sheetId,title,sheetType,gridProperties),merges)';
+const CELL_FIELDS = 'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue))))';
+
+const cellKey = (sheetId, rowIndex, columnIndex) => `${sheetId}:${rowIndex}:${columnIndex}`;
+const cellRange = ({ sheetId, rowIndex, columnIndex }) => ({
+  sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: columnIndex, endColumnIndex: columnIndex + 1,
+});
 
 export function parseSpreadsheetId(input) {
   if (typeof input === 'string') {
@@ -162,6 +169,58 @@ export function createSheetsGateway({ credentialsFile, clock = systemClock, fetc
         }
         return { id, title: sheet.properties.title, gridProperties: sheet.properties.gridProperties ?? null,
           data: sheet.data ?? [], merges: sheet.merges ?? [] };
+      });
+    },
+
+    /**
+     * SF-04: re-reads the current structure and value of each target cell, identified by sheet ID.
+     * Cells on deleted sheets or outside the current grid are not requested (`value: null`), so a
+     * structural change never fails the whole read. Returns one `{ sheet, value }` per target.
+     */
+    async readTargets(spreadsheetId, targets) {
+      const structure = await requestSheet(spreadsheetId, STRUCTURE_FIELDS);
+      const sheets = new Map(gridSheets(structure).map(({ properties, merges }) => [properties.sheetId, {
+        id: properties.sheetId, title: properties.title, rowCount: properties.gridProperties?.rowCount ?? 0,
+        columnCount: properties.gridProperties?.columnCount ?? 0, merges: merges ?? [],
+      }]));
+      const readable = targets.filter(({ sheetId, rowIndex, columnIndex }) => {
+        const sheet = sheets.get(sheetId);
+        return sheet && rowIndex < sheet.rowCount && columnIndex < sheet.columnCount;
+      });
+      const values = new Map();
+      if (readable.length) {
+        const data = await requestSheet(spreadsheetId, CELL_FIELDS, {
+          action: ':getByDataFilter',
+          body: { dataFilters: readable.map((target) => ({ gridRange: cellRange(target) })) },
+        });
+        if (!Array.isArray(data.sheets)) throw invalidResponse();
+        for (const { properties, data: grids = [] } of data.sheets) {
+          for (const { startRow = 0, startColumn = 0, rowData = [] } of grids) {
+            rowData.forEach((row, rowOffset) => row?.values?.forEach((cell, columnOffset) => {
+              values.set(cellKey(properties?.sheetId, startRow + rowOffset, startColumn + columnOffset), cell?.userEnteredValue);
+            }));
+          }
+        }
+      }
+      return targets.map(({ sheetId, rowIndex, columnIndex }) => ({
+        sheet: sheets.get(sheetId) ?? null,
+        value: values.get(cellKey(sheetId, rowIndex, columnIndex)) ?? null,
+      }));
+    },
+
+    /**
+     * SF-04: writes every cell in one spreadsheets.batchUpdate, which Google applies atomically.
+     * `userEnteredValue.stringValue` is stored as literal text, like the values API's RAW
+     * option, so "=1+1" never becomes a formula; `fields` limits the change to the value.
+     */
+    async writeCells(spreadsheetId, cells) {
+      await requestSheet(spreadsheetId, 'spreadsheetId', {
+        action: ':batchUpdate',
+        body: { requests: cells.map((cell) => ({ updateCells: {
+          range: cellRange(cell),
+          rows: [{ values: [{ userEnteredValue: { stringValue: cell.text } }] }],
+          fields: 'userEnteredValue',
+        } })) },
       });
     },
   };
