@@ -50,6 +50,8 @@ function render() {
 }
 
 function update(activity) {
+  // A confirmation such as 「已改為公平模式。」 is about the earlier change; drop it once the activity moves on.
+  if (current.status && current.status !== activity.status) showProgress('');
   current.mode = activity.mode;
   current.status = activity.status;
   render();
