@@ -1,0 +1,22 @@
+@startuml
+skinparam shadowing false
+title SF-03 結束與送出競態
+actor 教師 as T
+actor 學生 as S
+participant API
+database SQLite as DB
+T -> API : POST 結束（已確認）
+S -> API : POST 送出
+alt 送出交易先開始
+  API -> DB : OPEN，驗證並受理
+  API -> DB : 更新 CLOSED（保留已受理資料）
+else 結束交易先開始
+  API -> DB : 更新 CLOSED
+  API -> DB : 檢查階段，拒絕
+end
+note right of DB
+  CLOSED 同交易內預留 SF-04 結果運算。
+end note
+API --> T : 結束回覆與教師 SSE 快照
+API --> S : 受理或階段錯誤，以及學生 SSE 快照
+@enduml

@@ -22,7 +22,7 @@ function readCookie(req, name) {
   return TOKEN_PATTERN.test(value ?? '') ? value : null;
 }
 
-function teacherSession({ db, clock }, req) {
+export function getTeacherSession({ db, clock }, req) {
   const token = readCookie(req, COOKIE.teacher);
   if (!token) return null;
   const tokenHash = digest(token);
@@ -46,7 +46,7 @@ export function findGroupSession(db, token) {
 
 export function requireTeacher(deps) {
   return (req, res, next) => {
-    req.teacherSession = teacherSession(deps, req);
+    req.teacherSession = getTeacherSession(deps, req);
     if (!req.teacherSession) throw unauthorized('TEACHER_REQUIRED', '請先登入教師帳號。');
     next();
   };
@@ -74,7 +74,7 @@ function sameOrigin(req) {
 export function requireMutation(deps, role) {
   return (req, res, next) => {
     if (!sameOrigin(req)) throw forbidden('INVALID_ORIGIN', '請從本機系統頁面操作。');
-    const session = role === 'teacher' ? teacherSession(deps, req) : getGroupSession(deps, req);
+    const session = role === 'teacher' ? getTeacherSession(deps, req) : getGroupSession(deps, req);
     const cookie = session?.token ?? readCookie(req, bootstrapCookie(role));
     const token = req.get('X-CSRF-Token') ?? '';
     if (!cookie || !TOKEN_PATTERN.test(token) || !timingSafeEqual(Buffer.from(csrf(cookie)), Buffer.from(token))) {
@@ -98,7 +98,7 @@ function issueBootstrap(res, role) {
 }
 
 export function readTeacherSession(deps, req, res) {
-  const session = teacherSession(deps, req);
+  const session = getTeacherSession(deps, req);
   return { authenticated: !!session, csrfToken: session ? csrf(session.token) : bootstrap(req, res, 'teacher') };
 }
 
@@ -109,7 +109,7 @@ export function readStudentSession(deps, req, res) {
 }
 
 export function startTeacherSession({ db, clock }, req, res) {
-  const oldSession = teacherSession({ db, clock }, req);
+  const oldSession = getTeacherSession({ db, clock }, req);
   if (oldSession) db.prepare('DELETE FROM teacher_sessions WHERE token_hash = ?').run(oldSession.tokenHash);
   const now = clock.now();
   db.prepare('DELETE FROM teacher_sessions WHERE expires_at <= ?').run(now.toISOString());

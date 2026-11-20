@@ -1,0 +1,22 @@
+@startuml
+skinparam shadowing false
+title SF-03 同時送出及重試
+actor "A 組" as A
+actor "B 組" as B
+participant API
+database SQLite
+A -> API : POST 單位全部答案
+B -> API : POST 同單位答案
+critical withTransaction（依伺服器序列）
+API -> SQLite : 驗證 OPEN、組別與單位、檢查去重
+API -> SQLite : A 的序號及全部答案
+end
+API --> A : A 的受理識別與答案
+critical withTransaction
+API -> SQLite : 驗證及保存 B 的下一筆序號與答案
+end
+API --> B : B 的受理識別與答案
+A -> API : 重送同單位
+API -> SQLite : 查詢已受理的 A 紀錄
+API --> A : A 的原始受理紀錄
+@enduml
