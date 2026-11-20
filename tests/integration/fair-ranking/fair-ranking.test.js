@@ -40,18 +40,27 @@ function withCookie(app, role, from, cookie) {
   return client;
 }
 
-/**
- * Creates an activity with single-question units "1", "2", … and two groups (甲組, 乙組), then opens it.
- * The mode is set directly in the database while the activity is still PREPARING, because the mode
- * endpoint arrives with user story 2.
- */
-async function openActivity(app, teacher, { units: unitCount = 2, mode = 'FAIR' } = {}) {
+const modePath = (id) => api(id, 'mode');
+const modeOf = (app, id) => app.db.prepare('SELECT mode FROM activities WHERE id = ?').get(id).mode;
+
+/** A preparing activity with single-question units "1", "2", … (the speed mode default). */
+async function createActivity(app, teacher, { units: unitCount = 1 } = {}) {
   const { activity } = (await post(teacher, 'activities')).data;
-  app.db.prepare('UPDATE activities SET mode = ? WHERE id = ?').run(mode, activity.id);
   const units = Array.from({ length: unitCount }, (_, index) => {
     const key = String(index + 1);
     return { ...insertSingleUnit(app.db, activity.id, { questionKey: key }), key };
   });
+  return { activity, units };
+}
+
+/**
+ * Creates an activity with single-question units "1", "2", … and two groups (甲組, 乙組), then opens it.
+ * The mode is set directly in the database while the activity is still PREPARING, which keeps the
+ * results tests independent of the mode endpoint (that endpoint has its own tests below).
+ */
+async function openActivity(app, teacher, { units: unitCount = 2, mode = 'FAIR' } = {}) {
+  const { activity, units } = await createActivity(app, teacher, { units: unitCount });
+  app.db.prepare('UPDATE activities SET mode = ? WHERE id = ?').run(mode, activity.id);
   const alpha = await joinGroup(app, activity.joinCode, '甲組');
   const beta = await joinGroup(app, activity.joinCode, '乙組');
   assert.equal((await post(teacher, api(activity.id, 'open'))).status, 200);
@@ -72,6 +81,32 @@ async function playAc21(app, teacher) {
   await submit(game.alpha, two, '甲組第二題');
   await submit(game.beta, two, '乙組第二題');
   return game;
+}
+
+/** Reads the snapshots of an SSE stream one by one. */
+async function snapshots(t, client, path) {
+  const controller = new AbortController();
+  t.after(() => controller.abort());
+  const response = await client.request(path, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]) });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /text\/event-stream/);
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffered = '';
+  return async () => {
+    for (;;) {
+      const boundary = buffered.indexOf('\n\n');
+      if (boundary !== -1) {
+        const event = buffered.slice(0, boundary);
+        buffered = buffered.slice(boundary + 2);
+        if (event.startsWith(':')) continue;
+        assert.match(event, /^event: snapshot\ndata: /);
+        return JSON.parse(event.slice('event: snapshot\ndata: '.length));
+      }
+      const message = await reader.read();
+      assert.equal(message.done, false, 'SSE ended before receiving a snapshot');
+      buffered += message.value;
+    }
+  };
 }
 
 const summary = (unit) => unit.entries.map(({ groupName, rank, acceptedOrder, isWinner }) => [
@@ -157,4 +192,202 @@ test('AC-22 fair results stay the same after the server restarts', async (t) => 
     assert.deepEqual(reread.data, saved.results);
     assert.deepEqual(summary(reread.data.units[1]), [['乙組', 1, 2, true], ['甲組', 2, 1, false]]);
   }
+});
+
+// ── User story 2: choosing the mode while preparing, locked once open ────────────────
+
+test('FR-007 the teacher selects and changes the mode while the activity is preparing', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await createActivity(app, teacher);
+  assert.equal(activity.mode, 'SPEED');
+
+  const fair = await post(teacher, modePath(activity.id), { mode: 'FAIR' });
+  assert.equal(fair.status, 200);
+  assert.deepEqual(fair.data.activity, { ...activity, mode: 'FAIR' });
+  assert.equal(modeOf(app, activity.id), 'FAIR');
+
+  assert.equal((await post(teacher, modePath(activity.id), { mode: 'FAIR' })).status, 200);
+  const speed = await post(teacher, modePath(activity.id), { mode: 'SPEED' });
+  assert.equal(speed.status, 200);
+  assert.equal(speed.data.activity.mode, 'SPEED');
+  assert.equal(modeOf(app, activity.id), 'SPEED');
+});
+
+test('FR-009 AC-16 students, anonymous callers and requests without Origin or CSRF cannot change the mode', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await createActivity(app, teacher);
+  const student = await joinGroup(app, activity.joinCode, '甲組');
+  const path = modePath(activity.id);
+
+  const intruder = withCookie(app, 'teacher', student, 'buzzer_group');
+  const asStudent = await post(intruder, path, { mode: 'FAIR' });
+  assert.equal(asStudent.status, 401);
+  assert.equal(asStudent.data.error.code, 'TEACHER_REQUIRED');
+  assert.equal((await post(browser(app, 'teacher'), path, { mode: 'FAIR' })).data.error.code, 'TEACHER_REQUIRED');
+
+  const noCsrf = await teacher.request(path, { method: 'POST', body: { mode: 'FAIR' }, headers: { 'X-CSRF-Token': '' } });
+  assert.equal(noCsrf.status, 403);
+  assert.equal(noCsrf.data.error.code, 'INVALID_CSRF');
+  const foreign = await teacher.request(path, { method: 'POST', body: { mode: 'FAIR' }, headers: { Origin: 'http://evil.example' } });
+  assert.equal(foreign.status, 403);
+  assert.equal(foreign.data.error.code, 'INVALID_ORIGIN');
+
+  assert.equal(modeOf(app, activity.id), 'SPEED');
+});
+
+test('FR-009 a body that is not exactly a valid mode is a 400, and an unknown activity is a 404', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await createActivity(app, teacher);
+  const path = modePath(activity.id);
+
+  const noBody = await teacher.request(path, { method: 'POST' });
+  assert.equal(noBody.status, 400);
+  assert.equal(noBody.data.error.code, 'INVALID_MODE');
+  for (const body of [{}, { mode: 'speed' }, { mode: '' }, { mode: null }, { mode: ['FAIR'] }, { mode: 'FAIR', extra: 1 }]) {
+    const refused = await post(teacher, path, body);
+    assert.equal(refused.status, 400, JSON.stringify(body));
+    assert.equal(refused.data.error.code, 'INVALID_MODE');
+  }
+  assert.equal(modeOf(app, activity.id), 'SPEED');
+
+  const missing = await post(teacher, modePath('missing-activity'), { mode: 'FAIR' });
+  assert.equal(missing.status, 404);
+  assert.equal(missing.data.error.code, 'ACTIVITY_NOT_FOUND');
+});
+
+test('AC-23 once the activity is open or closed the mode cannot change, not even to the same mode', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await createActivity(app, teacher);
+  assert.equal((await post(teacher, modePath(activity.id), { mode: 'FAIR' })).status, 200);
+  assert.equal((await post(teacher, api(activity.id, 'open'))).status, 200);
+
+  for (const stage of ['open', 'closed']) {
+    if (stage === 'closed') assert.equal((await close(teacher, activity.id)).status, 200);
+    for (const mode of ['FAIR', 'SPEED']) {
+      const refused = await post(teacher, modePath(activity.id), { mode });
+      assert.equal(refused.status, 409, `${stage} ${mode}`);
+      assert.equal(refused.data.error.code, 'INVALID_PHASE');
+      assert.equal(modeOf(app, activity.id), 'FAIR');
+    }
+  }
+});
+
+test('FR-011 a mode change reaches the teacher and the joined students within two seconds', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await createActivity(app, teacher);
+  const alpha = await joinGroup(app, activity.joinCode, '甲組');
+  const readTeacher = await snapshots(t, teacher, api(activity.id, 'events'));
+  const readAlpha = await snapshots(t, alpha, 'events');
+  assert.equal((await readTeacher()).activity.mode, 'SPEED');
+  assert.equal((await readAlpha()).activity.mode, 'SPEED');
+
+  const started = performance.now();
+  assert.equal((await post(teacher, modePath(activity.id), { mode: 'FAIR' })).status, 200);
+  const [teacherSnapshot, alphaSnapshot] = await Promise.all([readTeacher(), readAlpha()]);
+  assert.equal(teacherSnapshot.activity.mode, 'FAIR');
+  assert.equal(alphaSnapshot.activity.mode, 'FAIR');
+  assert.ok(performance.now() - started < 2000);
+
+  assert.equal((await teacher.request(api(activity.id, 'live'))).data.activity.mode, 'FAIR');
+  assert.equal((await alpha.request('activity')).data.activity.mode, 'FAIR');
+
+  const latecomer = browser(app, 'student');
+  await latecomer.request('session');
+  const joined = await post(latecomer, 'join', { joinCode: activity.joinCode, name: '乙組' });
+  assert.equal(joined.status, 201);
+  assert.equal(joined.data.activity.mode, 'FAIR');
+  assert.equal((await latecomer.request('session')).data.activity.mode, 'FAIR');
+});
+
+test('AC-23 changing the mode and opening at the same moment has exactly one outcome', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+
+  for (let round = 0; round < 20; round += 1) {
+    const { activity } = await createActivity(app, teacher);
+    const [selected, opened] = await Promise.all([
+      post(teacher, modePath(activity.id), { mode: 'FAIR' }),
+      post(teacher, api(activity.id, 'open')),
+    ]);
+    assert.equal(opened.status, 200);
+    const mode = modeOf(app, activity.id);
+    if (selected.status === 200) {
+      assert.equal(mode, 'FAIR', 'the change came first, so the activity opened in fair mode');
+    } else {
+      assert.equal(selected.status, 409);
+      assert.equal(selected.data.error.code, 'INVALID_PHASE');
+      assert.equal(mode, 'SPEED', 'opening came first, so the mode stayed');
+    }
+    const later = await post(teacher, modePath(activity.id), { mode: mode === 'FAIR' ? 'SPEED' : 'FAIR' });
+    assert.equal(later.status, 409);
+    assert.equal(modeOf(app, activity.id), mode);
+  }
+});
+
+test('two simultaneous mode changes both succeed and leave one consistent mode', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const { activity } = await createActivity(app, teacher);
+  const [toFair, toSpeed] = await Promise.all([
+    post(teacher, modePath(activity.id), { mode: 'FAIR' }),
+    post(teacher, modePath(activity.id), { mode: 'SPEED' }),
+  ]);
+  assert.equal(toFair.status, 200);
+  assert.equal(toSpeed.status, 200);
+  const mode = modeOf(app, activity.id);
+  assert.ok(['FAIR', 'SPEED'].includes(mode));
+  assert.equal((await teacher.request(api(activity.id, 'live'))).data.activity.mode, mode);
+});
+
+test('AC-09 FR-012 a fair activity shows a group nothing about the others, and the teacher no provisional winner', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const teacher = await makeTeacher(app);
+  const fairGame = await createActivity(app, teacher, { units: 2 });
+  assert.equal((await post(teacher, modePath(fairGame.activity.id), { mode: 'FAIR' })).status, 200);
+  const alpha = await joinGroup(app, fairGame.activity.joinCode, '甲組');
+  const beta = await joinGroup(app, fairGame.activity.joinCode, '乙組');
+  assert.equal((await post(teacher, api(fairGame.activity.id, 'open'))).status, 200);
+
+  const before = await alpha.request('activity');
+  await submit(beta, fairGame.units[0], '乙組第一題');
+  const after = await alpha.request('activity');
+  assert.deepEqual(after.data, before.data, "乙組's submission changes nothing 甲組 can see");
+  assert.doesNotMatch(JSON.stringify(after.data), /乙組/);
+
+  // The fair snapshot has exactly the fields a speed activity has: no win counts, ranks or winners.
+  const speedGame = await createActivity(app, teacher, { units: 2 });
+  const gamma = await joinGroup(app, speedGame.activity.joinCode, '丙組');
+  assert.equal((await post(teacher, api(speedGame.activity.id, 'open'))).status, 200);
+  const shape = ({ data }) => ({
+    top: Object.keys(data).sort(),
+    activity: Object.keys(data.activity).sort(),
+    unit: Object.keys(data.units[0]).sort(),
+  });
+  assert.deepEqual(shape(after), shape(await gamma.request('activity')));
+  assert.deepEqual(shape(after).activity, ['id', 'mode', 'status']);
+
+  // The teacher sees who was accepted in which order, but no provisional winner in fair mode (FR-012).
+  await submit(alpha, fairGame.units[0], '甲組第一題');
+  const fairLive = (await teacher.request(api(fairGame.activity.id, 'live'))).data;
+  assert.equal(fairLive.activity.mode, 'FAIR');
+  assert.deepEqual(fairLive.units.map((unit) => unit.winnerGroupId), [null, null]);
+  assert.deepEqual(fairLive.units[0].submissions.map((entry) => entry.acceptSeq), [1, 2]);
+
+  await submit(gamma, speedGame.units[0], '丙組第一題');
+  const speedLive = (await teacher.request(api(speedGame.activity.id, 'live'))).data;
+  assert.equal(speedLive.units[0].winnerGroupId, speedLive.units[0].submissions[0].groupId);
+  assert.notEqual(speedLive.units[0].winnerGroupId, null);
 });
