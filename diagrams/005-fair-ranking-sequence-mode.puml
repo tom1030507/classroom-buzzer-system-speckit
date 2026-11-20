@@ -1,0 +1,59 @@
+@startuml 005-fair-ranking-sequence-mode
+title SF-05 公平排序 — Sequence：準備中改選模式、開啟後鎖定與即時同步（FR-10；AC-23）
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam wrapWidth 300
+autonumber
+
+actor "老師" as Teacher
+participant "教師頁面（分頁 1）\nmode-select.js" as TeacherUI
+participant "教師頁面（分頁 2）\nrealtime-buzzer.js" as TeacherUI2
+participant "學生頁面\nmode-info.js" as StudentUI
+participant "SF-05\nrouter.js・modes.js" as Mode
+participant "SF-03\nrouter.js・state.js\nevents.js・snapshots.js" as Buzzer
+database "SQLite" as Db
+
+== 準備中改選模式 ==
+Teacher -> TeacherUI : 選擇「公平模式」
+TeacherUI -> Mode : POST /api/teacher/activities/:id/mode { mode: "FAIR" }
+Mode -> Mode : requireTeacher、requireMutation（Origin＋CSRF）\n學生或未登入者：401／403，不改模式
+Mode -> Mode : 驗證 mode ∈ { SPEED, FAIR }（否則 400 INVALID_MODE）
+group selectMode：withTransaction（BEGIN IMMEDIATE；與開啟、結束同一序列）
+  Mode -> Db : getActivity；status 必須為 PREPARING
+  alt status ≠ PREPARING（已開啟或已結束）
+    Db --> Mode : 目前階段
+    Mode --> TeacherUI : 409 INVALID_PHASE（活動開啟後模式已鎖定），模式不變
+  else status = PREPARING
+    Mode -> Db : UPDATE activities SET mode = "FAIR"\n（trigger activities_mode_locked_after_open 為最後防線）
+    Db --> Mode : COMMIT
+    Mode --> TeacherUI : { activity: { status: PREPARING, mode: FAIR } }
+  end
+end
+TeacherUI -> TeacherUI : 顯示公平模式與規則說明（public/js/mode-rules.js）
+
+== 即時同步給老師與已加入的學生（沿用 SF-03 SSE，不新增事件） ==
+loop 每 250 ms，內容有變化才推送
+  Buzzer -> Db : getActivity／getGroupSession（讀取最新 mode）
+  Buzzer --> TeacherUI2 : event: snapshot { activity: { mode: FAIR, status: PREPARING } }
+  Buzzer --> StudentUI : event: snapshot { activity: { mode: FAIR, status: PREPARING } }\n（只含自己組別的資料）
+end
+StudentUI -> StudentUI : 顯示「公平模式」與規則說明（固定文字，不含其他組資訊）
+TeacherUI2 -> TeacherUI2 : 更新模式標示
+
+== 改選與開啟並行（同一序列，結果只有一種） ==
+Teacher -> TeacherUI : 改選模式（請求 A）
+Teacher -> TeacherUI2 : 開啟活動（請求 B）
+alt 請求 A 的交易先開始
+  Mode -> Db : mode 更新為新值
+  Buzzer -> Db : 開啟：status = OPEN（以新模式開啟，之後鎖定）
+else 請求 B 的交易先開始
+  Buzzer -> Db : 開啟：status = OPEN（鎖定模式）
+  Mode -> Db : 檢查 status ≠ PREPARING
+  Mode --> TeacherUI : 409 INVALID_PHASE，模式不變
+end
+
+note over Mode, Db
+  結束時由 SF-04 的 saveFinalResults 依活動 mode 選擇排名規則，
+  公平順位計算見 005-fair-ranking-sequence。
+end note
+@enduml

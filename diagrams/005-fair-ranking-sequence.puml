@@ -1,0 +1,65 @@
+@startuml 005-fair-ranking-sequence
+title SF-05 公平排序 — Sequence：結束公平模式活動並保存順位，結果頁、寫回與 CSV 讀同一份結果（FR-10；AC-21、AC-22、AC-23）
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam wrapWidth 300
+autonumber
+
+actor "老師" as Teacher
+participant "教師頁面\nrealtime-buzzer.js\nresults-export.js" as TeacherUI
+actor "學生（各組）" as Student
+participant "學生頁面\nresults-export.js" as StudentUI
+participant "SF-03\nrouter.js・state.js" as Buzzer
+participant "SF-04\nresults.js" as Results
+participant "SF-04\nranking.js" as Ranking
+participant "SF-05\nfair-ranking.js" as FairRank
+participant "SF-04\nrouter.js・csv.js\nsheets-export.js" as Outputs
+database "SQLite" as Db
+
+== 結束公平模式活動（SF-03 結束交易中的 SF-05 接點） ==
+Teacher -> TeacherUI : 結束搶答（確認對話框）
+TeacherUI -> Buzzer : POST /api/teacher/activities/:id/close { confirm: true }
+Buzzer -> Buzzer : requireTeacher、requireMutation（Origin＋CSRF）
+group withTransaction（BEGIN IMMEDIATE；與送出、改選模式同一序列）
+  Buzzer -> Db : 確認 status = OPEN；UPDATE status = CLOSED、closed_at
+  Buzzer -> Results : saveFinalResults(db, id, "FAIR")
+  Results -> Db : 讀取各單位（依 units.position）及其受理\n（submissionId、groupId、acceptSeq，依 accept_seq）
+  Results -> Ranking : RANKERS["FAIR"](units)
+  Ranking -> FairRank : rankFair(units)
+  FairRank -> FairRank : 每組勝出次數從 0 起；依 position 逐單位：\n依（勝出次數、acceptSeq）排序 → finalRank 1、2、3…\n第 1 名勝出，其組勝出次數 +1
+  FairRank --> Results : [{ submissionId, unitId, finalRank }]
+  Results -> Db : INSERT results（final_rank、is_winner = final_rank = 1）
+end
+alt 任一步失敗
+  Db --> Buzzer : ROLLBACK：活動仍為 OPEN，沒有部分結果
+  Buzzer --> TeacherUI : { error: { code, message } }
+else 成功
+  Db --> Buzzer : COMMIT：結束狀態與完整結果一起保存
+  Buzzer --> TeacherUI : { activity: { status: CLOSED, mode: FAIR } }
+end
+
+== 結束後：結果頁、寫回預覽與 CSV 讀同一份 results（沿用 SF-04） ==
+Buzzer --> TeacherUI : SSE snapshot（CLOSED）
+Buzzer --> StudentUI : SSE snapshot（CLOSED）
+TeacherUI -> Outputs : GET /api/teacher/activities/:id/results
+StudentUI -> Outputs : GET /api/student/results（所屬活動須為 CLOSED）
+Outputs -> Db : readResults：單位、受理、答案與 results
+Outputs --> TeacherUI : ResultView（mode = FAIR；受理順序 acceptedOrder 與最終順位 rank 分開）
+Outputs --> StudentUI : 同一份 ResultView
+TeacherUI -> Outputs : POST /api/teacher/activities/:id/sheets-export/preview
+Outputs -> Db : listWinningAnswers：is_winner = 1 的答案（公平規則的勝出者）
+Outputs --> TeacherUI : 預覽標示公平模式；寫入內容只有勝出答案本身
+TeacherUI -> Outputs : GET /api/teacher/activities/:id/results.csv
+Outputs --> TeacherUI : CSV（mode = FAIR；rank 與 accepted_order 分開；is_winner 取自 results）
+
+note over Results, FairRank
+  AC-21（U1、U2；A 兩次都較快）
+  U1：A（seq 1）、B（seq 2）→ A 第 1 並勝出（A 勝出 1 次）、B 第 2
+  U2：A（seq 3）、B（seq 4）→ A 已勝出 1 次、B 為 0 次 → B 第 1 並勝出、A 第 2
+  受理順序仍是 A、B；最終順位是 B、A。
+end note
+note over TeacherUI, StudentUI
+  伺服器重啟後 results 與 activities.mode 不變，三處呈現與重啟前相同（AC-22）。
+  答案與組名只以 textContent 呈現。
+end note
+@enduml
