@@ -20,7 +20,7 @@ Api -> Db : 驗證密碼雜湊、建立工作階段
 Api --> TeacherUI : HttpOnly、SameSite=Strict Cookie＋CSRF token
 Teacher -> TeacherUI : 建立活動（預設速度模式；可改公平模式，SF-05）
 TeacherUI -> Api : 建立活動（SF-01）
-Api -> Db : 新增活動（PREPARING、加入碼）
+Api -> Db : 交易：沒有未結束活動才新增\n（PREPARING、六碼加入碼，AC-24）
 Teacher -> TeacherUI : 輸入試算表網址或 ID，選擇工作表
 TeacherUI -> Api : 匯入預覽（SF-02）
 Api -> Sheets : 以服務帳戶讀取儲存格值與合併格
@@ -32,7 +32,7 @@ TeacherUI -> Api : 確認匯入（SF-02）
 Api -> Db : 交易：以新匯入取代 units／questions
 Student -> StudentUI : 輸入加入碼與組名
 StudentUI -> Api : 加入（SF-01）
-Api -> Db : 新增組別（僅 PREPARING）
+Api -> Db : 新增組別（僅 PREPARING，組名 1～30 字元）
 Api --> StudentUI : 組別工作階段 Cookie
 
 == 搶答中 OPEN ==

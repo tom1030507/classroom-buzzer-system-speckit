@@ -12,14 +12,14 @@ class "teacher_sessions" as TeacherSession {
 }
 class "activities" as Activity {
   id
-  join_code
+  join_code : 六碼指定字元
   status = PREPARING
   mode = SPEED
 }
 class "student_groups" as StudentGroup {
   id
   activity_id
-  name
+  name : 1～30 字元
 }
 class "group_sessions" as GroupSession {
   token_hash
@@ -31,5 +31,9 @@ class "group_join_secret" as JoinSecret {
 JoinSecret ..> GroupSession : 同瀏覽器加入重試
 Settings ..> TeacherSession : 登入驗證
 Activity "1" -- "0..*" StudentGroup
+note bottom of Activity
+  AC-24：同時最多一場非 CLOSED，
+  建立交易內檢查
+end note
 StudentGroup "1" -- "0..1" GroupSession
 @enduml
