@@ -123,19 +123,118 @@ test('AC-15 signed-in teacher and group resume after restarting the server', asy
   assert.equal((await student.request('session')).data.group.name, 'Restart group');
 });
 
-test('teacher can return to an unfinished activity after creating another', async (t) => {
+test('teacher can still reach every unfinished activity left by earlier data', async (t) => {
   const app = await startTestApp();
   t.after(() => app.close());
   configureTeacher(app.db);
   const teacher = await login(app);
-  const create = async () => (await teacher.request('activities', { method: 'POST' })).data.activity;
-  const first = await create();
-  const second = await create();
-  openActivity(app.db, first.id);
+  const first = insertActivity(app.db, { joinCode: 'EARLIER1' });
+  const second = insertActivity(app.db, { joinCode: 'EARLIER2' });
+  openActivity(app.db, first);
   const { activity, availableActivities } = (await teacher.request('activities/current')).data;
-  assert.equal(activity.id, second.id);
-  assert.deepEqual(availableActivities.map(({ id }) => id), [second.id, first.id]);
-  assert.equal((await teacher.request(`activities/${first.id}`)).data.activity.status, 'OPEN');
+  assert.equal(activity.id, second);
+  assert.deepEqual(availableActivities.map(({ id }) => id), [second, first]);
+  assert.equal((await teacher.request(`activities/${first}`)).data.activity.status, 'OPEN');
+});
+
+test('AC-24 a teacher has at most one unfinished activity, across sessions, until it closes', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teacher = await login(app);
+  const otherSession = await login(app);
+  const create = (client) => client.request('activities', { method: 'POST' });
+  const count = () => app.db.prepare('SELECT count(*) AS n FROM activities').get().n;
+
+  const first = await create(teacher);
+  assert.equal(first.status, 201);
+  for (const advance of [() => {}, () => openActivity(app.db, first.data.activity.id)]) {
+    advance();
+    for (const client of [teacher, otherSession]) {
+      const refused = await create(client);
+      assert.equal(refused.status, 409);
+      assert.equal(refused.data.error.code, 'ACTIVITY_UNFINISHED');
+    }
+  }
+  assert.equal(count(), 1);
+
+  closeActivity(app.db, first.data.activity.id);
+  const next = await create(otherSession);
+  assert.equal(next.status, 201);
+  assert.notEqual(next.data.activity.id, first.data.activity.id);
+  assert.equal(count(), 2);
+});
+
+test('AC-24 two sessions creating at the same moment leave exactly one activity', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teachers = [await login(app), await login(app)];
+  for (let round = 0; round < 10; round += 1) {
+    const responses = await Promise.all(teachers.map((client) => client.request('activities', { method: 'POST' })));
+    assert.deepEqual(responses.map(({ status }) => status).sort(), [201, 409]);
+    const unfinished = app.db.prepare("SELECT id FROM activities WHERE status <> 'CLOSED'").all();
+    assert.equal(unfinished.length, 1);
+    openActivity(app.db, unfinished[0].id);
+    closeActivity(app.db, unfinished[0].id);
+  }
+  assert.equal(app.db.prepare('SELECT count(*) AS n FROM activities').get().n, 10);
+});
+
+test('AC-24 join codes are six characters without the easily confused 0, O, 1 and I', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teacher = await login(app);
+  const codes = [];
+  for (let round = 0; round < 100; round += 1) {
+    const { data: { activity } } = await teacher.request('activities', { method: 'POST' });
+    codes.push(activity.joinCode);
+    openActivity(app.db, activity.id);
+    closeActivity(app.db, activity.id);
+  }
+  for (const code of codes) assert.match(code, /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/);
+  assert.equal(new Set(codes).size, codes.length);
+  assert.ok(new Set(codes.join('')).size > 16, 'codes use more than the sixteen hexadecimal characters');
+});
+
+test('AC-24 a group name is 1 to 30 Unicode characters after trimming', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  insertActivity(app.db, { joinCode: 'NAMES1' });
+  const attempt = async (name) => {
+    const student = browser(app, 'student');
+    await student.request('session');
+    return student.request('join', { method: 'POST', body: { joinCode: 'NAMES1', name } });
+  };
+  const names = () => app.db.prepare('SELECT name FROM student_groups ORDER BY id').all().map(({ name }) => name);
+
+  for (const name of ['', '   ', '\u3000\u3000', '甲'.repeat(31), '😀'.repeat(31)]) {
+    const refused = await attempt(name);
+    assert.equal(refused.status, 400, JSON.stringify(name));
+    assert.equal(refused.data.error.code, 'INVALID_JOIN');
+    assert.match(refused.data.error.message, /30/);
+  }
+  assert.deepEqual(names(), []);
+
+  const accepted = ['甲', '乙'.repeat(30), '😀'.repeat(30)];
+  for (const name of accepted) assert.equal((await attempt(name)).status, 201, name);
+  assert.equal((await attempt(`\u3000 ${'丙'.repeat(30)} `)).status, 201);
+  assert.deepEqual(names(), [...accepted, '丙'.repeat(30)]);
+});
+
+test('AC-24 groups joining with the same name at the same moment: only one succeeds', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  insertActivity(app.db, { joinCode: 'SAME22' });
+  const students = Array.from({ length: 5 }, () => browser(app, 'student'));
+  await Promise.all(students.map((student) => student.request('session')));
+  const responses = await Promise.all(students.map((student) => student.request('join', {
+    method: 'POST', body: { joinCode: 'SAME22', name: '同名組' },
+  })));
+  assert.deepEqual(responses.map(({ status }) => status).sort(), [201, 409, 409, 409, 409]);
+  assert.equal(app.db.prepare('SELECT count(*) AS n FROM student_groups').get().n, 1);
+  assert.equal(app.db.prepare('SELECT count(*) AS n FROM group_sessions').get().n, 1);
 });
 
 test('the original browser can retry a join whose session cookie was lost', async (t) => {
@@ -172,13 +271,12 @@ async function joinAsStudent(app, joinCode, name) {
   return student;
 }
 
-test('leaving preparation removes only the current group and lets the same browser join elsewhere', async (t) => {
+test('leaving preparation removes only the current group and lets the same browser join again', async (t) => {
   const app = await startTestApp();
   t.after(() => app.close());
   configureTeacher(app.db);
   const teacher = await login(app);
   const initial = (await teacher.request('activities', { method: 'POST' })).data.activity;
-  const next = (await teacher.request('activities', { method: 'POST' })).data.activity;
   const leaving = await joinAsStudent(app, initial.joinCode, 'Leaving group');
   const staying = await joinAsStudent(app, initial.joinCode, 'Staying group');
   const previous = await leaving.request('session');
@@ -202,10 +300,12 @@ test('leaving preparation removes only the current group and lets the same brows
   assert.equal((await staying.request('session')).data.group.name, 'Staying group');
 
   const rejoined = await leaving.request('join', {
-    method: 'POST', body: { joinCode: next.joinCode, name: 'Leaving group' },
+    method: 'POST', body: { joinCode: initial.joinCode, name: 'Renamed group' },
   });
   assert.equal(rejoined.status, 201);
-  assert.equal(rejoined.data.activity.id, next.id);
+  assert.equal(rejoined.data.activity.id, initial.id);
+  assert.deepEqual((await teacher.request(`activities/${initial.id}`)).data.groups.map(({ name }) => name),
+    ['Staying group', 'Renamed group']);
 });
 
 test('leaving requires the active group Cookie, same Origin and its CSRF token', async (t) => {
