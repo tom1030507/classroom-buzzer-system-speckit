@@ -333,6 +333,7 @@ test('AC-23 changing the mode and opening at the same moment has exactly one out
     const later = await post(teacher, modePath(activity.id), { mode: mode === 'FAIR' ? 'SPEED' : 'FAIR' });
     assert.equal(later.status, 409);
     assert.equal(modeOf(app, activity.id), mode);
+    assert.equal((await close(teacher, activity.id)).status, 200);
   }
 });
 
@@ -368,7 +369,16 @@ test('AC-09 FR-012 a fair activity shows a group nothing about the others, and t
   assert.deepEqual(after.data, before.data, "乙組's submission changes nothing 甲組 can see");
   assert.doesNotMatch(JSON.stringify(after.data), /乙組/);
 
+  // The teacher sees who was accepted in which order, but no provisional winner in fair mode (FR-012).
+  await submit(alpha, fairGame.units[0], '甲組第一題');
+  const fairLive = (await teacher.request(api(fairGame.activity.id, 'live'))).data;
+  assert.equal(fairLive.activity.mode, 'FAIR');
+  assert.deepEqual(fairLive.units.map((unit) => unit.winnerGroupId), [null, null]);
+  assert.deepEqual(fairLive.units[0].submissions.map((entry) => entry.acceptSeq), [1, 2]);
+
   // The fair snapshot has exactly the fields a speed activity has: no win counts, ranks or winners.
+  // A teacher has one unfinished activity at a time (AC-24), so the speed activity follows the fair one.
+  assert.equal((await close(teacher, fairGame.activity.id)).status, 200);
   const speedGame = await createActivity(app, teacher, { units: 2 });
   const gamma = await joinGroup(app, speedGame.activity.joinCode, '丙組');
   assert.equal((await post(teacher, api(speedGame.activity.id, 'open'))).status, 200);
@@ -379,13 +389,6 @@ test('AC-09 FR-012 a fair activity shows a group nothing about the others, and t
   });
   assert.deepEqual(shape(after), shape(await gamma.request('activity')));
   assert.deepEqual(shape(after).activity, ['id', 'mode', 'status']);
-
-  // The teacher sees who was accepted in which order, but no provisional winner in fair mode (FR-012).
-  await submit(alpha, fairGame.units[0], '甲組第一題');
-  const fairLive = (await teacher.request(api(fairGame.activity.id, 'live'))).data;
-  assert.equal(fairLive.activity.mode, 'FAIR');
-  assert.deepEqual(fairLive.units.map((unit) => unit.winnerGroupId), [null, null]);
-  assert.deepEqual(fairLive.units[0].submissions.map((entry) => entry.acceptSeq), [1, 2]);
 
   await submit(gamma, speedGame.units[0], '丙組第一題');
   const speedLive = (await teacher.request(api(speedGame.activity.id, 'live'))).data;

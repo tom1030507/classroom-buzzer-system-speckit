@@ -1,10 +1,18 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { withTransaction } from '../../db/transaction.js';
 import { badRequest, conflict, notFound, unauthorized } from '../../lib/errors.js';
 import { nowIso } from '../../lib/time.js';
 import { findGroupSession, getGroupSession, groupJoinToken, insertGroupSession } from './sessions.js';
 
 const ACTIVITY_FIELDS = 'id, join_code AS joinCode, status, mode, created_at AS createdAt';
+/** AC-24: 0/O and 1/I are left out because they are easy to confuse when typed from a screen. */
+const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const JOIN_CODE_LENGTH = 6;
+/** Counted in Unicode code points after trimming. */
+const GROUP_NAME_MAX_LENGTH = 30;
+
+const newJoinCode = () => Array.from({ length: JOIN_CODE_LENGTH },
+  () => JOIN_CODE_ALPHABET[randomInt(JOIN_CODE_ALPHABET.length)]).join('');
 
 export function getActivity(db, id) {
   const row = db.prepare(`SELECT ${ACTIVITY_FIELDS} FROM activities WHERE id = ?`).get(id);
@@ -27,12 +35,17 @@ export function listGroups(db, activityId) {
 export function createActivity({ db, clock }) {
   const id = randomUUID();
   const insert = db.prepare('INSERT INTO activities (id, join_code, created_at) VALUES (?, ?, ?) ON CONFLICT (join_code) DO NOTHING');
-  let created;
-  do {
-    const joinCode = randomBytes(5).toString('hex').toUpperCase();
-    created = insert.run(id, joinCode, nowIso(clock));
-  } while (!created.changes);
-  return getActivity(db, id);
+  return withTransaction(db, () => {
+    // One local teacher account, so every signed-in session shares this limit (AC-24).
+    if (db.prepare("SELECT 1 FROM activities WHERE status <> 'CLOSED' LIMIT 1").get()) {
+      throw conflict('ACTIVITY_UNFINISHED', '已有尚未結束的活動，結束後才能建立新活動。');
+    }
+    let created;
+    do {
+      created = insert.run(id, newJoinCode(), nowIso(clock));
+    } while (!created.changes);
+    return getActivity(db, id);
+  });
 }
 
 export function joinActivity(deps, req) {
@@ -41,8 +54,8 @@ export function joinActivity(deps, req) {
   const joinCode = typeof body.joinCode === 'string' ? body.joinCode.trim().toUpperCase() : '';
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   if (Object.keys(body).some((key) => key !== 'name' && key !== 'joinCode') ||
-      !/^[A-Z0-9]{1,32}$/.test(joinCode) || !name || !name.isWellFormed() || [...name].length > 100 || /[\p{Cc}]/u.test(name)) {
-    throw badRequest('INVALID_JOIN', '請輸入有效的加入碼與組名（最多 100 個字元）。');
+      !/^[A-Z0-9]{1,32}$/.test(joinCode) || !name || !name.isWellFormed() || [...name].length > GROUP_NAME_MAX_LENGTH || /[\p{Cc}]/u.test(name)) {
+    throw badRequest('INVALID_JOIN', `請輸入有效的加入碼與組名（組名最多 ${GROUP_NAME_MAX_LENGTH} 個字元）。`);
   }
 
   return withTransaction(db, () => {

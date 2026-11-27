@@ -10,10 +10,14 @@ database SQLite
 API -> SQLite : 讀 scrypt 設定並保存工作階段
 API --> 教師 : Cookie 及 CSRF
 教師 -> API : 建立活動
-API -> SQLite : 新增準備中的活動
-API --> 教師 : 加入碼
+alt 沒有未結束的活動（AC-24）
+API -> SQLite : 同一交易內檢查後新增準備中的活動
+API --> 教師 : 六碼加入碼
+else 已有 PREPARING 或 OPEN 活動
+API --> 教師 : 409 ACTIVITY_UNFINISHED
+end
 學生 -> API : 取得工作階段及 CSRF
-學生 -> API : 以加入碼、組名加入
+學生 -> API : 以加入碼、組名（1～30 字元）加入
 API -> SQLite : 交易內檢查階段並新增組別與工作階段
 API --> 學生 : Cookie 及本人組別
 opt 加入回覆未收到

@@ -84,6 +84,9 @@ activitySelect.addEventListener('change', async () => {
   }
 });
 
+// A refusal such as "finish the current activity first" is out of date once that activity moves on.
+document.addEventListener('teacher-activity-phase', () => showStatus(''));
+
 const refresh = document.querySelector('#refresh-groups');
 refresh.addEventListener('click', () => void perform(refresh, async () => {
   const activityId = selectedId;

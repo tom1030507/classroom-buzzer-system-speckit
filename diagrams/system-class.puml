@@ -23,7 +23,7 @@ enum UnitKind {
 
 class Activity <<activities>> {
   id : TEXT <<PK>>
-  join_code : TEXT <<UNIQUE>>
+  join_code : TEXT <<UNIQUE>> 六碼
   mode : ActivityMode = SPEED
   status : ActivityStatus = PREPARING
   created_at : UTC ISO 8601
@@ -34,7 +34,7 @@ class Activity <<activities>> {
 class StudentGroup <<student_groups>> {
   id : INTEGER <<PK>>
   activity_id : TEXT <<FK>>
-  name : TEXT
+  name : TEXT（1～30 字元）
   created_at : UTC ISO 8601
 }
 
@@ -123,6 +123,7 @@ note right of Activity
   狀態只能 PREPARING → OPEN → CLOSED。
   OPEN 後鎖定 mode、units、questions。
   只有 PREPARING 可新增組別。
+  同時最多一場非 CLOSED 活動（AC-24）。
   units、questions、組別不可改屬其他活動。
 end note
 
