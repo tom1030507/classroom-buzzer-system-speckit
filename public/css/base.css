@@ -1,22 +1,48 @@
-/* Shared base styles. States must be readable as text, not only by colour (spec.md §7). */
+/* Shared base styles. States must be readable as text, not only by colour (spec.md §7).
+   Tokens follow taste-skill (MIT, Leonxlnx): neutral warm ground, one near-black ink, one accent,
+   spacing on a 4/8 scale, weights 400/500 only, one filled button per view. */
 
 :root {
-  --color-text: #1f2328;
-  --color-muted: #59636e;
-  --color-bg: #ffffff;
-  --color-surface: #f6f8fa;
-  --color-border: #d1d9e0;
-  --color-accent: #0b57d0;
+  --color-text: #1c1a17;
+  --color-muted: #5c574f;
+  --color-bg: #f4f2ed;
+  --color-surface: #f4f2ed;
+  --color-panel: #ffffff;
+  --color-border: rgb(28 26 23 / 12%);
+  --color-border-strong: rgb(28 26 23 / 26%);
+  --color-accent: #1f4fd1;
+  --color-accent-hover: #1a43b3;
+  --color-accent-soft: #e8eefc;
   --color-success: #1a7f37;
   --color-danger: #c62828;
   --color-warning: #9a6700;
-  --focus-ring: 3px solid #f59e0b;
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+
+  --shadow-panel: 0 1px 2px rgb(28 26 23 / 4%), 0 8px 24px -12px rgb(28 26 23 / 10%);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --font-mono: 'Cascadia Mono', 'SF Mono', Consolas, ui-monospace, monospace;
+
   font-family:
-    system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei',
-    sans-serif;
+    'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--color-text);
   background: var(--color-bg);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
 *,
@@ -25,44 +51,179 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
 }
 
+body {
+  background: var(--color-bg);
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.topbar__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  max-width: 64rem;
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 var(--s-5);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.brand__mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.topbar__role {
+  padding: var(--s-1) var(--s-3);
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.topbar__link {
+  margin-left: auto;
+  font-size: 0.9375rem;
+}
+
+/* ---------- Page ---------- */
+
 .page {
   max-width: 64rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: var(--s-7) var(--s-5) var(--s-8);
 }
 
 .page-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
-  align-items: baseline;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--s-5);
+}
+
+/* Size and tight tracking carry headings, not bold weight. */
+h1,
+h2,
+h3 {
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 h1 {
-  font-size: 1.6rem;
-  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.375rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--s-4);
+}
+
+h3 {
+  font-size: 1.125rem;
+  margin: var(--s-5) 0 var(--s-3);
+}
+
+p {
+  margin: var(--s-3) 0;
+}
+
+strong,
+th {
+  font-weight: 500;
 }
 
 a {
   color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 
 :focus-visible {
-  outline: var(--focus-ring);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-label {
+#app,
+.stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-5);
+}
+
+#app > *,
+.stack > * {
+  margin: 0;
+}
+
+#app > button {
+  justify-self: start;
+}
+
+/* Each feature area is one white panel; panels never nest. */
+.panel {
+  padding: var(--s-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  background: var(--color-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel > :first-child {
+  margin-top: 0;
+}
+
+.panel > :last-child {
+  margin-bottom: 0;
+}
+
+/* Sub-sections inside a panel (e.g. each question unit) are split by a hairline. */
+.panel section {
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.panel section:empty {
+  display: none;
+}
+
+.panel section > h3:first-child {
+  margin-top: 0;
+}
+
+/* ---------- Forms ---------- */
+
+label,
+legend {
   display: block;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: var(--s-1);
 }
 
 input,
@@ -70,49 +231,243 @@ select,
 textarea,
 button {
   font: inherit;
+  color: inherit;
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  min-height: 48px;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--r-sm);
+  background: var(--color-panel);
+  transition:
+    border-color 160ms var(--ease),
+    box-shadow 160ms var(--ease);
 }
 
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--color-muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.code-input {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+form {
+  max-width: 32rem;
+  display: grid;
+  gap: var(--s-2);
+}
+
+form.panel {
+  max-width: 28rem;
+}
+
+form label:not(:first-child) {
+  margin-top: var(--s-2);
+}
+
+form button {
+  justify-self: start;
+  margin-top: var(--s-3);
+}
+
+/* ---------- Buttons ---------- */
+
+/* Buttons default to the secondary look; the main action in a view is the only filled one. */
 button {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--color-accent);
-  border-radius: 6px;
+  min-height: 44px;
+  padding: 0 var(--s-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--r-sm);
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform 120ms var(--ease),
+    background-color 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button[type='submit'],
+.btn--primary {
+  border-color: var(--color-accent);
   background: var(--color-accent);
   color: #ffffff;
-  cursor: pointer;
+}
+
+button[type='submit']:hover:not(:disabled),
+.btn--primary:hover:not(:disabled) {
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
 }
 
 button:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* Status messages always include a text label such as "已受理：" or "錯誤：". */
+/* The student's answer button is the one thing they press under time pressure. */
+#student-buzzer form {
+  max-width: none;
+}
+
+#student-buzzer button[type='submit'] {
+  justify-self: stretch;
+  min-height: 56px;
+  font-size: 1.125rem;
+  border-radius: var(--r-md);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: var(--s-4) 0;
+}
+
+.actions label {
+  margin: 0;
+}
+
+/* ---------- Status ---------- */
+
+/* Status messages always include a text label such as "已受理：" or "錯誤：". The dot only repeats it. */
 .status {
-  padding: 0.5rem 0.75rem;
-  border-left: 4px solid var(--color-border);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  background: var(--color-panel);
+  --dot: var(--color-muted);
+}
+
+.status::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+  transform: translateY(-1px);
+}
+
+.panel .status {
   background: var(--color-surface);
+  border-color: transparent;
 }
 
 .status--success {
-  border-left-color: var(--color-success);
+  --dot: var(--color-success);
 }
 
 .status--error {
-  border-left-color: var(--color-danger);
+  --dot: var(--color-danger);
+  border-color: rgb(198 40 40 / 30%);
+}
+
+.panel .status--error {
+  border-color: rgb(198 40 40 / 30%);
 }
 
 .status--warning {
-  border-left-color: var(--color-warning);
+  --dot: var(--color-warning);
 }
+
+/* ---------- Teacher roster ---------- */
+
+.toolbar {
+  margin: 0;
+}
+
+.roster {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 2fr;
+  gap: var(--s-6);
+  align-items: start;
+}
+
+.join-code {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-5);
+  border-radius: var(--r-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* The join code is read aloud or copied from the projector. */
+#join-code {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  line-height: 1.1;
+  letter-spacing: 0.12em;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.roster__groups h2 {
+  margin-bottom: var(--s-3);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding: 0;
+  margin: 0 0 var(--s-4);
+  list-style: none;
+}
+
+.chips:empty::before {
+  content: '尚無組別加入';
+  color: var(--color-muted);
+}
+
+.chips li {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Misc ---------- */
 
 /* Answers keep their original line breaks (spec.md §3) and are rendered as text. */
 .answer-text {
@@ -132,73 +487,235 @@ button:disabled {
   border: 0;
 }
 
-form {
-  max-width: 32rem;
-  display: grid;
-  gap: 0.5rem;
-}
-
 [hidden] {
   display: none !important;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  width: auto;
+input[type='checkbox'],
+input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--color-accent);
+  box-shadow: none;
 }
 
 /* SF-05 mode selection and the rule description (shared by the teacher, student and result pages). */
 fieldset {
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+fieldset .actions {
+  margin: var(--s-2) 0;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--r-md);
+  transition:
+    border-color 160ms var(--ease),
+    background-color 160ms var(--ease);
+}
+
+fieldset .actions label {
+  flex: 1;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+fieldset .actions:has(input:checked) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+fieldset .actions:has(input:disabled) label {
+  cursor: default;
 }
 
 .mode-rule {
-  padding: 0.5rem 0.75rem;
-  border-left: 4px solid var(--color-border);
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-md);
   background: var(--color-surface);
 }
 
 .mode-rule p {
-  margin: 0.25rem 0;
+  margin: var(--s-1) 0;
 }
 
-.buzzer-monitor-scroll {
-  overflow-x: auto;
+/* ---------- Landing ---------- */
+
+.hero {
+  padding: var(--s-7) 0 var(--s-6);
 }
 
-.buzzer-monitor-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
+.hero h1 {
+  font-size: 3.5rem;
+  letter-spacing: -0.035em;
 }
 
-.buzzer-monitor-table :is(th, td) {
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: top;
+.lede {
+  max-width: 36em;
+  margin-top: var(--s-4);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--color-muted);
 }
 
-/* SF-04 results tables (teacher and student pages). */
+.role-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--s-5);
+  padding: 0;
+  margin: var(--s-5) 0 0;
+  list-style: none;
+}
+
+.role-list a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  height: 100%;
+  padding: var(--s-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  background: var(--color-panel);
+  box-shadow: var(--shadow-panel);
+  color: var(--color-text);
+  text-decoration: none;
+  transition:
+    transform 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.role-list a:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+}
+
+.role-list__kicker {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+.role-list strong {
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.role-list span:not([class]) {
+  color: var(--color-muted);
+}
+
+.role-list__go {
+  margin-top: auto;
+  padding-top: var(--s-5);
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+/* ---------- Tables (SF-03 monitor, SF-04 results) ---------- */
+
+.buzzer-monitor-scroll,
 .results-scroll {
   overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  background: var(--color-panel);
 }
 
+.buzzer-monitor-table,
 .results-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
 }
 
-.results-table :is(th, td) {
-  padding: 0.5rem;
+:is(.buzzer-monitor-table, .results-table) :is(th, td) {
+  padding: var(--s-3) var(--s-4);
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;
+}
+
+:is(.buzzer-monitor-table, .results-table) tr:last-child > :is(th, td) {
+  border-bottom: 0;
+}
+
+:is(.buzzer-monitor-table, .results-table) thead th {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  white-space: nowrap;
+}
+
+:is(.buzzer-monitor-table, .results-table) tbody th {
+  min-width: 7em;
+}
+
+:is(.buzzer-monitor-table, .results-table) .answer-text {
+  min-width: 12em;
+}
+
+:is(.buzzer-monitor-table, .results-table) tbody tr:hover {
+  background: rgb(28 26 23 / 2%);
+}
+
+/* ---------- Small screens and reduced motion ---------- */
+
+@media (max-width: 639px) {
+  .topbar__inner {
+    height: 56px;
+    padding: 0 var(--s-4);
+  }
+
+  .page {
+    padding: var(--s-6) var(--s-4) var(--s-7);
+  }
+
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  .hero {
+    padding: var(--s-5) 0;
+  }
+
+  .hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .lede {
+    font-size: 1.125rem;
+  }
+
+  .panel {
+    padding: var(--s-5) var(--s-4);
+    border-radius: var(--r-md);
+  }
+
+  .roster {
+    grid-template-columns: 1fr;
+    gap: var(--s-5);
+  }
+
+  form button,
+  .toolbar button {
+    justify-self: stretch;
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+
+  button:hover:not(:disabled),
+  button:active:not(:disabled),
+  .role-list a:hover {
+    transform: none;
+  }
 }

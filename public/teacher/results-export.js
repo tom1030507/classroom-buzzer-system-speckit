@@ -18,7 +18,7 @@ const conflictWarning = h('p', { class: 'status status--warning', role: 'alert',
   '有題目衝突，這次無法寫回，也不會寫入任何格子。請把試算表恢復成匯入時的結構與標記後重新預覽，或另建活動重新匯入。');
 const previewTable = h('div');
 const paused = h('input', { type: 'checkbox', id: 'sheets-export-paused' });
-const writeButton = h('button', { type: 'button', disabled: true }, '寫回試算表');
+const writeButton = h('button', { type: 'button', class: 'btn--primary', disabled: true }, '寫回試算表');
 const confirmArea = h('div', { hidden: true },
   h('div', { class: 'actions' }, paused, h('label', { for: 'sheets-export-paused' }, '我已請其他人暫停編輯這份試算表')),
   h('div', { class: 'actions' }, writeButton),
