@@ -208,6 +208,10 @@ a {
   border-top: 1px solid var(--color-border);
 }
 
+.panel section:empty {
+  display: none;
+}
+
 .panel section > h3:first-child {
   margin-top: 0;
 }
