@@ -9,4 +9,4 @@
 
 - [x] T003（#8，US3，FR-02、FR-08，AC-02、AC-03、AC-17）接上 `router.js`、`units.js` 及 `public/teacher/sheets-import.js`，由 `tests/integration/sheets-import/import.test.js` 驗證教師授權、階段、預覽、確認及失敗保留舊匯入。
 - [x] T004（#5，DC-02、DC-03）核對圖表、契約、測試與 [驗收紀錄](acceptance.md)。
-- [ ] T005（#5、#7、#8，US2、US3，FR-02，AC-01、AC-03）依驗收紀錄使用真實雲端試算表，保存試算表連結與結果截圖。
+- [x] T005（#5、#7、#8，US2、US3，FR-02，AC-01、AC-03）依驗收紀錄使用真實雲端試算表，保存試算表連結與結果截圖。
