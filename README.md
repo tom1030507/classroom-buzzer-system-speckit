@@ -4,7 +4,7 @@
 控制活動、監看作答，結束後把勝出答案 **寫回同一份試算表的原答案格**，並可下載 CSV；
 學生以組別加入、依題號送出答案，結束後查看結果。
 
-- 產品規格與驗收基準：[`spec.md`](spec.md)（v1.1，**不得任意修改**；變更依 §10 程序）
+- 產品規格與驗收基準：[`spec.md`](spec.md)（v1.2，**不得任意修改**；變更依 §10 程序）
 - 工程原則：[`.specify/memory/constitution.md`](.specify/memory/constitution.md)
 - 開發方法：[GitHub Spec Kit](https://github.com/github/spec-kit) 1.2.1，Claude Code 整合
 
@@ -79,10 +79,10 @@ tools/speckit-plantuml/     自製 Spec Kit extension（PlantUML 圖表 hook）
 
 | 子功能 | 功能目錄 | 分支 | 需求 | 驗收 | 依賴 |
 | --- | --- | --- | --- | --- | --- |
-| SF-01 活動與組別 | `specs/001-activity-groups` | `feat/001-activity-groups` | FR-01 | AC-04、AC-08、AC-16（身分部分）、AC-24 | — |
+| SF-01 活動與組別 | `specs/001-activity-groups` | `feat/001-activity-groups` | FR-01 | AC-04、AC-08、AC-16（身分部分）、AC-24、AC-25 | — |
 | SF-02 線上題目匯入 | `specs/002-sheets-import` | `feat/002-sheets-import` | FR-02、FR-08（匯入） | AC-01～AC-03、AC-17 | SF-01 |
 | SF-03 即時搶答 | `specs/003-realtime-buzzer` | `feat/003-realtime-buzzer` | FR-03～FR-05、FR-08（送出） | AC-04～AC-10、AC-15、AC-16、AC-18 | SF-01、SF-02 |
-| SF-04 結果與匯出 | `specs/004-results-export` | `feat/004-results-export` | FR-06、FR-07、FR-09 | AC-11～AC-14、AC-17、AC-19、AC-20 | SF-02、SF-03 |
+| SF-04 結果與匯出 | `specs/004-results-export` | `feat/004-results-export` | FR-06、FR-07、FR-09 | AC-11～AC-14、AC-17、AC-19、AC-20、AC-26 | SF-02、SF-03 |
 | SF-05 公平排序 | `specs/005-fair-ranking` | `feat/005-fair-ranking` | FR-10 | AC-21～AC-23 | SF-03、SF-04 |
 
 在 Claude Code 中（以 SF-02 為例）：
