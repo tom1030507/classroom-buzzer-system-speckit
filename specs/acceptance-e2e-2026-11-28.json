@@ -1,0 +1,450 @@
+{
+  "startedAt": "2026-11-28T09:00:06.965Z",
+  "finishedAt": "2026-11-28T09:01:37.344Z",
+  "commit": "3e752e7",
+  "node": "v26.5.0",
+  "aborted": null,
+  "passed": 62,
+  "failed": 0,
+  "spreadsheets": {
+    "speed": "https://docs.google.com/spreadsheets/d/1TnofsfiNIQveUNqu98Qf_7aHfIun4la3A6bLoYM89T4/edit",
+    "fair": "https://docs.google.com/spreadsheets/d/1kphTTBv_VsEP8CBf3e2R8UICuEJ_Do5kX1GKSFA5qyc/edit",
+    "moved": "https://docs.google.com/spreadsheets/d/1XBGkXsU-dGVPkO0_fnRyp9pj_YSr6slyFQ_H8kxjGn4/edit"
+  },
+  "results": [
+    {
+      "scene": "1-speed",
+      "ac": "AC-24",
+      "ok": true,
+      "text": "加入碼是六碼指定字元",
+      "detail": "5LGYS5"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-01",
+      "ok": true,
+      "text": "直接由線上試算表匯入，題號與原格位一致",
+      "detail": "6 題"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-17",
+      "ok": true,
+      "text": "跨兩張工作表的三題題組成為一個單位",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-04",
+      "ok": true,
+      "text": "準備中可加入、不可作答",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "退出",
+      "ok": true,
+      "text": "準備中退出只移除本組，之後可重新加入",
+      "detail": "退出後 =甲組"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-24",
+      "ok": true,
+      "text": "有未結束活動時拒絕再建立",
+      "detail": "已有尚未結束的活動，結束後才能建立新活動。"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-04",
+      "ok": true,
+      "text": "開啟後 2 秒內同步到兩組",
+      "detail": "160 ms"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-04",
+      "ok": true,
+      "text": "開啟後新組別被拒絕",
+      "detail": "這場活動已停止接受新組別。"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-07",
+      "ok": true,
+      "text": "同組改答案重送，第一筆紀錄不變",
+      "detail": "[{\"questionKey\":\"1\",\"text\":\"+886\"}]"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-15",
+      "ok": true,
+      "text": "學生重新整理後受理紀錄仍在，只有未答題可作答",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-09",
+      "ok": true,
+      "text": "搶答中乙組的畫面與 API 沒有甲組的組名或答案",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-16",
+      "ok": true,
+      "text": "含腳本的答案只顯示成文字、沒有執行",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-11",
+      "ok": true,
+      "text": "結束後 2 秒內老師與兩組看到結果",
+      "detail": "109 ms"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-05",
+      "ok": true,
+      "text": "速度模式依受理先後決定勝出，第 6 題無人作答",
+      "detail": "{\"Q:1\":\"=甲組\",\"Q:2\":\"乙組\",\"G:A\":\"乙組\",\"Q:6\":null}"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-19",
+      "ok": true,
+      "text": "CSV 有 BOM、固定欄位、正確轉義，無人作答一列",
+      "detail": "11 列"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-20",
+      "ok": true,
+      "text": "CSV 檔案中公式開頭的組名與答案前有單引號（試算表軟體開啟仍需人工核對）",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "FR-09",
+      "ok": true,
+      "text": "CSV unit_id 為 Q:題號／G:代號",
+      "detail": ""
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "改寫 學習單!B3 後預覽顯示衝突且沒有寫回按鈕",
+      "detail": "{\"衝突\":1,\"可寫入\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "復原標記後重試：預覽可寫入",
+      "detail": "{\"可寫入\":5,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-17",
+      "ok": true,
+      "text": "寫回完成，逐題成功",
+      "detail": "{\"成功\":5}"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-12",
+      "ok": true,
+      "text": "線上讀回：勝出答案以純文字寫入原格，其他儲存格內容與格式不變",
+      "detail": "5 格相符"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-12",
+      "ok": true,
+      "text": "無人作答的格子仍是原標記",
+      "detail": "跨表驗收!B7"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "重複匯出的預覽辨識為已是相同內容",
+      "detail": "{\"已是相同內容\":5,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "1-speed",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "重複寫回不重寫（沒有送出任何寫入要求）",
+      "detail": "{\"已是相同內容\":5}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-23",
+      "ok": true,
+      "text": "準備中改為公平模式，兩組畫面同步",
+      "detail": "213 ms"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-23",
+      "ok": true,
+      "text": "準備中改為速度模式，兩組畫面同步",
+      "detail": "265 ms"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-23",
+      "ok": true,
+      "text": "準備中改為公平模式，兩組畫面同步",
+      "detail": "265 ms"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-23",
+      "ok": true,
+      "text": "開啟後模式鎖定，直接呼叫 API 也被拒絕",
+      "detail": "INVALID_PHASE"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-21",
+      "ok": true,
+      "text": "公平模式勝出者與依規則推算一致",
+      "detail": "{\"Q:1\":\"甲組\",\"Q:2\":\"乙組\",\"G:A\":\"乙組\",\"Q:6\":null}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-21",
+      "ok": true,
+      "text": "第 2 題乙組因勝出較少排第一，受理順序保留",
+      "detail": "乙組:順位1/受理2, 甲組:順位2/受理1"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-22",
+      "ok": true,
+      "text": "題組勝出次數相同時依受理序號",
+      "detail": ""
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-15",
+      "ok": true,
+      "text": "重啟伺服器後老師與學生的結果完全相同",
+      "detail": ""
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-22",
+      "ok": true,
+      "text": "重啟後公平順位不變",
+      "detail": ""
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-23",
+      "ok": true,
+      "text": "CSV 標示 FAIR，第 2 題乙組 rank 1、accepted_order 2",
+      "detail": ""
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "改寫 學習單!B5 後預覽顯示衝突且沒有寫回按鈕",
+      "detail": "{\"可寫入\":4,\"衝突\":1,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "復原標記後重試：預覽可寫入",
+      "detail": "{\"可寫入\":5,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-17",
+      "ok": true,
+      "text": "寫回完成，逐題成功",
+      "detail": "{\"成功\":5}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-12",
+      "ok": true,
+      "text": "線上讀回：勝出答案以純文字寫入原格，其他儲存格內容與格式不變",
+      "detail": "5 格相符"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-12",
+      "ok": true,
+      "text": "無人作答的格子仍是原標記",
+      "detail": "跨表驗收!B7"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "重複匯出的預覽辨識為已是相同內容",
+      "detail": "{\"已是相同內容\":5,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "重複寫回不重寫（沒有送出任何寫入要求）",
+      "detail": "{\"已是相同內容\":5}"
+    },
+    {
+      "scene": "2-fair",
+      "ac": "AC-23",
+      "ok": true,
+      "text": "寫回畫面標示公平模式",
+      "detail": ""
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-02",
+      "ok": true,
+      "text": "另一種版面與非連續題號動態解析出新位置",
+      "detail": ""
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "移動標記 D4 → H4：預覽顯示衝突、沒有寫回按鈕、沒有寫入",
+      "detail": "第 81 題 衝突：目標格已不是匯入時的標記，可能被移動、改寫或插入了列欄。"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "移動標記 D4 → H4：復原後預覽恢復可寫入",
+      "detail": "{\"可寫入\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "刪除第 8 列：預覽顯示衝突、沒有寫回按鈕、沒有寫入",
+      "detail": "第 12 題 衝突：目標格已不是匯入時的標記，可能被移動、改寫或插入了列欄。；第 55 題 衝突：目標格已不是匯入時的標記，可能被移動、改寫或插入了列欄。"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "刪除第 8 列：復原後預覽恢復可寫入",
+      "detail": "{\"可寫入\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "改寫 D4：預覽顯示衝突、沒有寫回按鈕、沒有寫入",
+      "detail": "第 81 題 衝突：目標格已不是匯入時的標記，可能被移動、改寫或插入了列欄。"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "改寫 D4：復原後預覽恢復可寫入",
+      "detail": "{\"可寫入\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "合併 D4:E4：預覽顯示衝突、沒有寫回按鈕、沒有寫入",
+      "detail": "第 81 題 衝突：目標格已被合併。"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "合併 D4:E4：復原後預覽恢復可寫入",
+      "detail": "{\"可寫入\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "刪除工作表「第二頁」：預覽顯示衝突、沒有寫回按鈕、沒有寫入",
+      "detail": "第 90 題 衝突：工作表已不存在。"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "刪除工作表「第二頁」：復原後預覽恢復可寫入",
+      "detail": "{\"可寫入\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-13",
+      "ok": true,
+      "text": "預覽後才改寫：寫回整批停止、沒有任何格子被寫入",
+      "detail": "{\"衝突\":1,\"未寫入（整批停止）\":3}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "寫回時斷網：回報失敗而非成功，沒有寫入",
+      "detail": "{\"失敗\":4}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "寫入後回應遺失且無法回讀：顯示待核對",
+      "detail": "{\"待核對\":4}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "（線上實際已寫入，系統沒有誤報成功或失敗）",
+      "detail": ""
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "恢復網路後預覽辨識四格已是相同內容",
+      "detail": "{\"已是相同內容\":4,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "重試完成且沒有重寫",
+      "detail": "{\"已是相同內容\":4}"
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-02",
+      "ok": true,
+      "text": "各答案位於新版面的原格，無人作答格仍是標記",
+      "detail": ""
+    },
+    {
+      "scene": "3-conflicts",
+      "ac": "AC-14",
+      "ok": true,
+      "text": "寫回後的外部修改判為衝突且不覆寫",
+      "detail": "{\"衝突\":1,\"已是相同內容\":3,\"無人作答，不寫入\":1}"
+    },
+    {
+      "scene": "all",
+      "ac": "—",
+      "ok": true,
+      "text": "整個過程頁面沒有未處理的 JavaScript 錯誤",
+      "detail": ""
+    }
+  ]
+}

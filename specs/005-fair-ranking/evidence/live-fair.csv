@@ -1,0 +1,12 @@
+﻿activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,Q:1,1,甲組,蒸發,2026-11-28T09:00:19.567Z,1,1,true
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,Q:1,1,乙組,沸騰,2026-11-28T09:00:19.625Z,2,2,false
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,Q:2,2,乙組,凝結,2026-11-28T09:00:19.739Z,2,1,true
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,Q:2,2,甲組,液化,2026-11-28T09:00:19.682Z,1,2,false
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,G:A,3,乙組,降水,2026-11-28T09:00:19.796Z,1,1,true
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,G:A,4,乙組,入滲,2026-11-28T09:00:19.796Z,1,1,true
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,G:A,5,乙組,海洋,2026-11-28T09:00:19.796Z,1,1,true
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,G:A,3,甲組,下雨,2026-11-28T09:00:19.854Z,2,2,false
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,G:A,4,甲組,滲透,2026-11-28T09:00:19.854Z,2,2,false
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,G:A,5,甲組,河口,2026-11-28T09:00:19.854Z,2,2,false
+0b9c9039-4a04-488e-9f7f-c9336afbf0df,FAIR,Q:6,6,,,,,,false

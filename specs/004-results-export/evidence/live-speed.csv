@@ -1,0 +1,13 @@
+﻿activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,Q:1,1,'=甲組,'=1+1,2026-11-28T09:00:10.245Z,1,1,true
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,Q:1,1,乙組,'+886,2026-11-28T09:00:10.298Z,2,2,false
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,Q:2,2,乙組,'單引號開頭,2026-11-28T09:00:10.352Z,1,1,true
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,Q:2,2,'=甲組,'-3,2026-11-28T09:00:10.406Z,2,2,false
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,G:A,3,乙組,中文答案：光合作用,2026-11-28T09:00:10.461Z,1,1,true
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,G:A,4,乙組,"第一行
+第二行",2026-11-28T09:00:10.461Z,1,1,true
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,G:A,5,乙組,'@abc,2026-11-28T09:00:10.461Z,1,1,true
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,G:A,3,'=甲組,"逗號, ""引號""",2026-11-28T09:00:10.516Z,2,2,false
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,G:A,4,'=甲組,<script>alert(1)</script>,2026-11-28T09:00:10.516Z,2,2,false
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,G:A,5,'=甲組,一般文字,2026-11-28T09:00:10.516Z,2,2,false
+bfd086b8-e158-4cf9-82d5-d90f362430fa,SPEED,Q:6,6,,,,,,false
