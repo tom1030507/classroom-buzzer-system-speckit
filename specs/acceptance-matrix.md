@@ -37,8 +37,8 @@
 | AC-22 | 同次數、題組、無人作答、重啟 | 通過（題組只計一次見自動化測試） | — |
 | AC-23 | 準備中切換、開啟後鎖定、三處一致 | 通過 | [表2 寫回後](005-fair-ranking/evidence/live-sheet-fair.png) |
 | AC-24 | 活動數量、加入碼、組名 | 通過：加入碼與單一未結束活動（組名規則見自動化測試） | — |
-| AC-25 | 準備中退出、開啟競態 | 僅自動化測試（線上執行早於 spec.md v1.2） | — |
-| AC-26 | CSV 可讀單位識別 | 下載的 CSV 已是 `Q:1`、`Q:2`、`G:A`（[下載的 CSV](004-results-export/evidence/live-speed.csv)） | — |
+| AC-25 | 準備中退出、開啟競態 | 通過：準備中退出只移除本組，之後可重新加入（逐項結果中標為「退出」；拒絕條件、開啟競態與舊即時連線見自動化測試） | — |
+| AC-26 | CSV 可讀單位識別 | 通過：`unit_id` 為 `Q:題號`／`G:代號`，含無人作答列（[下載的 CSV](004-results-export/evidence/live-speed.csv)） | [人工速度場下載的 CSV](004-results-export/evidence/live-manual-speed.csv) |
 
 效能基準（spec.md §7：1 位老師、10 組、20 題、2 秒內）由 AC-04 的 10 組自動化測試涵蓋；線上執行（2 組、6 題）
 開啟後 160 毫秒同步，結束後 109 毫秒顯示結果。
@@ -164,7 +164,7 @@
 
 ### AC-19
 
-- `tests/integration/results-export/results-export.test.js`：AC-19 the teacher downloads the same results as CSV after closing, and students cannot
+- `tests/integration/results-export/results-export.test.js`：AC-19 and AC-26 the teacher downloads the same results as CSV with readable unit ids, and students cannot
 - `tests/unit/results-export/csv.test.js`：AC-19 the CSV has a BOM, CRLF line endings, the fixed columns and one row per answered question
 
 ### AC-20
