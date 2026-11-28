@@ -4,18 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>課堂搶答系統</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/base.css" />
   </head>
   <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="/"><img class="brand__mark" src="/favicon.svg" alt="" width="28" height="28" />課堂搶答</a>
+      </div>
+    </header>
     <div class="page">
-      <header class="page-header">
-        <h1>課堂搶答系統</h1>
-      </header>
       <main>
-        <p>請選擇身分：</p>
-        <ul>
-          <li><a href="/teacher/">我是老師</a>：驗證身分、匯入題目、控制活動、查看結果與匯出</li>
-          <li><a href="/student/">我是學生</a>：輸入加入碼與組名，依題號作答</li>
+        <section class="hero" aria-labelledby="hero-title">
+          <h1 id="hero-title">課堂搶答系統</h1>
+          <p class="lede">老師從 Google 試算表匯入題目，各組以加入碼進場搶答，伺服器依受理順序決定勝出，結果可下載或寫回試算表。</p>
+        </section>
+        <h2 class="visually-hidden">請選擇身分</h2>
+        <ul class="role-list">
+          <li>
+            <a href="/teacher/">
+              <span class="role-list__kicker">教師端</span>
+              <strong>我是老師</strong>
+              <span>驗證身分、匯入題目、控制活動、查看結果與匯出</span>
+              <span class="role-list__go" aria-hidden="true">進入 →</span>
+            </a>
+          </li>
+          <li>
+            <a href="/student/">
+              <span class="role-list__kicker">學生端</span>
+              <strong>我是學生</strong>
+              <span>輸入加入碼與組名，依題號作答</span>
+              <span class="role-list__go" aria-hidden="true">進入 →</span>
+            </a>
+          </li>
         </ul>
       </main>
     </div>

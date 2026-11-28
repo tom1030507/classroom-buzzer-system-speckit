@@ -4,35 +4,46 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>老師 — 課堂搶答系統</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/base.css" />
   </head>
   <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="/"><img class="brand__mark" src="/favicon.svg" alt="" width="28" height="28" />課堂搶答</a>
+        <span class="topbar__role">教師端</span>
+        <a class="topbar__link" href="/">回首頁</a>
+      </div>
+    </header>
     <div class="page">
-      <header class="page-header">
+      <div class="page-header">
         <h1>老師</h1>
-        <a href="/">回首頁</a>
-      </header>
+      </div>
       <main id="app">
         <p id="teacher-status" class="status" role="status">正在載入教師工作階段…</p>
-        <form id="teacher-login" hidden>
+        <form id="teacher-login" class="panel" hidden>
           <label for="teacher-password">教師密碼</label>
           <input id="teacher-password" type="password" autocomplete="current-password" required />
           <button type="submit">登入</button>
         </form>
-        <section id="teacher-activities" hidden aria-label="活動管理">
-          <div class="actions">
-            <button id="create-activity" type="button">建立新活動</button>
+        <section id="teacher-activities" class="stack" hidden aria-label="活動管理">
+          <div class="actions toolbar">
+            <button id="create-activity" class="btn--primary" type="button">建立新活動</button>
             <button id="teacher-logout" type="button">登出</button>
           </div>
-          <section id="teacher-activity" hidden aria-label="目前活動">
-            <p>學生加入碼 <strong id="join-code"></strong></p>
-            <h2>已加入的組別</h2>
-            <button id="refresh-groups" type="button">重新載入組別</button>
-            <ul id="teacher-groups"></ul>
-            <section id="mode-select" hidden></section>
-            <section id="sheets-import" hidden></section>
-            <section id="teacher-buzzer" hidden></section>
-            <section id="results-export" hidden></section>
+          <section id="teacher-activity" class="stack" hidden aria-label="目前活動">
+            <div class="panel roster">
+              <p class="join-code">學生加入碼 <strong id="join-code"></strong></p>
+              <div class="roster__groups">
+                <h2>已加入的組別</h2>
+                <ul id="teacher-groups" class="chips"></ul>
+                <button id="refresh-groups" type="button">重新載入組別</button>
+              </div>
+            </div>
+            <section id="mode-select" class="panel" hidden></section>
+            <section id="sheets-import" class="panel" hidden></section>
+            <section id="teacher-buzzer" class="panel" hidden></section>
+            <section id="results-export" class="panel" hidden></section>
           </section>
         </section>
       </main>

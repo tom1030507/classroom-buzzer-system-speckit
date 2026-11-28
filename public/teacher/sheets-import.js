@@ -35,7 +35,7 @@ function openImport(activity) {
     h('h3', null, '匯入順序'), ordered);
   const previewButton = h('button', { type: 'button', hidden: true, disabled: true }, '產生預覽');
   const confirmation = h('div');
-  const confirmButton = h('button', { type: 'button' }, '確認匯入');
+  const confirmButton = h('button', { type: 'button', class: 'btn--primary' }, '確認匯入');
   const preview = h('section', { hidden: true, 'aria-label': '匯入預覽' }, confirmation, confirmButton);
   const current = h('section', { 'aria-label': '已確認的匯入' });
   const status = h('p', { class: 'status', role: 'status', hidden: true });
