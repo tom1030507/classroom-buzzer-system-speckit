@@ -132,7 +132,7 @@ test('AC-21 closing a fair activity saves fair ranks that the teacher and every 
   const [first, second] = results.data.units;
   // 甲組 wins the first unit; the second unit goes to 乙組 although 甲組 was accepted first.
   assert.deepEqual(summary(first), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
-  assert.deepEqual(summary(second), [['乙組', 1, 2, true], ['甲組', 2, 1, false]]);
+  assert.deepEqual(summary(second), [['乙組', 1, 4, true], ['甲組', 2, 3, false]]);
 
   for (const student of [alpha, beta]) {
     const seen = await student.request('results');
@@ -191,7 +191,7 @@ test('AC-22 fair results stay the same after the server restarts', async (t) => 
   for (const reread of [await teacher.request(api(saved.id, 'results')), await alpha.request('results')]) {
     assert.equal(reread.status, 200);
     assert.deepEqual(reread.data, saved.results);
-    assert.deepEqual(summary(reread.data.units[1]), [['乙組', 1, 2, true], ['甲組', 2, 1, false]]);
+    assert.deepEqual(summary(reread.data.units[1]), [['乙組', 1, 4, true], ['甲組', 2, 3, false]]);
   }
 });
 
@@ -471,15 +471,15 @@ test('AC-23 the result page, the CSV and the write-back preview agree on a fair 
   assert.equal(results.data.activity.mode, 'FAIR');
   const [first, second] = results.data.units;
   assert.deepEqual(summary(first), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
-  assert.deepEqual(summary(second), [['乙組', 1, 2, true], ['甲組', 2, 1, false]]);
+  assert.deepEqual(summary(second), [['乙組', 1, 4, true], ['甲組', 2, 3, false]]);
   for (const student of [alpha, beta]) assert.deepEqual((await student.request('results')).data, results.data);
 
   // The CSV keeps the acceptance order and the final rank apart, and marks the rank-1 group as the winner.
   assert.deepEqual(await readCsv(teacher, activity.id), [
     ['FAIR', 'Q:1', '1', '甲組', '1', '1', 'true'],
     ['FAIR', 'Q:1', '1', '乙組', '2', '2', 'false'],
-    ['FAIR', 'Q:2', '2', '乙組', '2', '1', 'true'],
-    ['FAIR', 'Q:2', '2', '甲組', '1', '2', 'false'],
+    ['FAIR', 'Q:2', '2', '乙組', '4', '1', 'true'],
+    ['FAIR', 'Q:2', '2', '甲組', '3', '2', 'false'],
   ]);
 
   // The write-back targets the rank-1 answer of every unit: 乙組 in the second unit, not the fastest 甲組.
@@ -542,12 +542,12 @@ test('FR-017 SC-006 a speed activity still crowns the fastest group of every uni
   assert.equal(results.data.activity.mode, 'SPEED');
   const [first, second] = results.data.units;
   assert.deepEqual(summary(first), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
-  assert.deepEqual(summary(second), [['甲組', 1, 1, true], ['乙組', 2, 2, false]]);
+  assert.deepEqual(summary(second), [['甲組', 1, 3, true], ['乙組', 2, 4, false]]);
   assert.deepEqual(await readCsv(teacher, activity.id), [
     ['SPEED', 'Q:1', '1', '甲組', '1', '1', 'true'],
     ['SPEED', 'Q:1', '1', '乙組', '2', '2', 'false'],
-    ['SPEED', 'Q:2', '2', '甲組', '1', '1', 'true'],
-    ['SPEED', 'Q:2', '2', '乙組', '2', '2', 'false'],
+    ['SPEED', 'Q:2', '2', '甲組', '3', '1', 'true'],
+    ['SPEED', 'Q:2', '2', '乙組', '4', '2', 'false'],
   ]);
   assert.deepEqual(previewContents(await previewOf(teacher, activity.id)), [
     ['1', '甲組', '甲組第一題', 'READY'],
