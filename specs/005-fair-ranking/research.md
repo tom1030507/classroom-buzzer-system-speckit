@@ -82,8 +82,8 @@
 
 - **Decision**：`readResults`、`listWinningAnswers`、`buildResultsCsv` 不修改，只新增公平模式的測試。畫面上，結果頁顯示規則說明
   （兩種模式都顯示，滿足 FR-010 結束後也能看到規則），寫回預覽與紀錄的標題標示模式（FR-013）。
-- **Rationale**：它們都只讀 `results` 與 `activities.mode`。`accepted_order` 以 `ROW_NUMBER() OVER (PARTITION BY unit_id
-  ORDER BY accept_seq)` 計算、`rank` 取自 `final_rank`，結果頁本來就有「最終順位」與「受理順序」兩欄，結果依順位排序；
+- **Rationale**：它們都只讀 `results` 與 `activities.mode`。`accepted_order` 取自受理序號 `accept_seq`
+  （2026-11-28 改為整場序號，#32）、`rank` 取自 `final_rank`，結果頁本來就有「最終順位」與「受理順序」兩欄，結果依順位排序；
   寫回取 `is_winner = 1`；CSV 依單位順序與順位排序。SF-04 已有測試證明「最終順位與受理順序不同」時讀取正確（FR-025）。
 
 ## R9. 移除「公平模式無法結束」，保留未登錄模式的防護

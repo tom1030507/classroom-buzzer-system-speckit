@@ -54,7 +54,7 @@
 - **快照**（SF-03，不修改）：教師 `activity: { id, status, mode }`；學生 `activity: { id, mode, status }`。
   模式改變時內容改變，SSE 即推送新快照（教師與學生各自過濾，不含其他組資料）。
 - **結果檢視 `ResultView`**（SF-04，不修改）：`activity.mode` 為 `FAIR` 時，各單位的 `entries` 依 `rank` 排序，
-  每筆同時有 `acceptedOrder`（單位內受理名次）與 `rank`（最終順位）、`isWinner`。
+  每筆同時有 `acceptedOrder`（整場受理序號）與 `rank`（最終順位）、`isWinner`。
 
 ## 前端固定文字（`public/js/mode-rules.js`）
 
