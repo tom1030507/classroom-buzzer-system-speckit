@@ -13,7 +13,7 @@
 | `is_winner` | `final_rank = 1` 時為 1，否則為 0 |
 
 - 只在活動 `CLOSED` 時新增；之後不可修改或刪除（基礎模型的 trigger）。
-- 由 `saveFinalResults` 在結束交易內一次寫入整場活動的結果；速度模式下 `final_rank` 等於單位內受理順序。
+- 由 `saveFinalResults` 在結束交易內一次寫入整場活動的結果；速度模式下 `final_rank` 依單位內受理序號的先後排列。
 - 無人作答的單位沒有任何結果列。
 
 ## 寫回紀錄 `sheet_exports`（004-02，新增）
@@ -66,7 +66,7 @@
       "questions": [{ "key": "6" }, { "key": "9" }],
       "noAnswer": false,
       "entries": [
-        { "groupName": "乙組", "acceptedOrder": 1, "acceptedAt": "2026-11-20T08:01:05.000Z",
+        { "groupName": "乙組", "acceptedOrder": 2, "acceptedAt": "2026-11-20T08:01:05.000Z",
           "rank": 1, "isWinner": true,
           "answers": [{ "questionKey": "6", "text": "葉綠體" }, { "questionKey": "9", "text": "二氧化碳" }] }
       ]
@@ -77,8 +77,8 @@
 
 - `units` 依單位固定順序；`questions` 依組內題序；`entries` 依最終順位。
 - `label`：單題為 `Q:<題號>`，題組為 `G:<題組代號>`（Clarification）。
-- `acceptedOrder` 以單位內 `accept_seq` 排名計算（research R2）。
-- 不包含組別 ID、受理序號、受理識別等內部值。
+- `acceptedOrder` 是整場活動的受理序號 `accept_seq`（research R2）。
+- 不包含組別 ID、受理識別等內部值。
 
 ## 寫回預覽與結果（API 回應）
 

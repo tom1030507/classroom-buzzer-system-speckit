@@ -18,10 +18,12 @@
 
 ## R2. 實際受理順序不另存
 
-- **Decision**：`accepted_order` 在讀取時以 `ROW_NUMBER() OVER (PARTITION BY unit_id ORDER BY accept_seq)` 計算。
-- **Rationale**：`submissions.accept_seq` 是唯一的事實來源且不可修改，衍生值不需要另存；Clarification
-  已確認採單位內名次。
-- **Alternatives considered**：在 `results` 新增欄位（重複資料，且基礎模型已註明受理順序看 `accept_seq`）。
+- **Decision**：`accepted_order` 直接使用 `submissions.accept_seq`，即整場活動的受理序號（2026-11-28，#32）。
+- **Rationale**：`accept_seq` 是唯一的事實來源且不可修改，不需要另存；根目錄 `spec.md` FR-04、FR-09 稱它為
+  受理序號，另一 OpenSpec 小組也用整場序號。
+- **Alternatives considered**：以 `ROW_NUMBER() OVER (PARTITION BY unit_id ORDER BY accept_seq)` 算單位內名次
+  （2026-11-20 的原決定，與另一小組不一致而改掉）；在 `results` 新增欄位（重複資料，且基礎模型已註明受理順序看
+  `accept_seq`）。
 
 ## R3. 結果以獨立 API 提供，不放進 SSE 快照
 
