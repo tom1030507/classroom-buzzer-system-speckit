@@ -1,9 +1,9 @@
-# 驗收對照表（AC-01～AC-24）
+# 驗收對照表（AC-01～AC-26）
 
 整合驗收 [#20](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/20)。情境與通過條件以根目錄
 [`spec.md`](../spec.md) §8 為準。
 
-- **自動化測試**：`npm test`，2026-11-28 在 `main` 提交 `3e752e7` 共 173 項通過；各情境引用的案例名稱列在本頁下方。
+- **自動化測試**：`npm test`，2026-11-28 在 `main` 提交 `3e752e7` 共 173 項通過；AC-25、AC-26（spec.md v1.2）的案例於 #38 補上，合併後 `main` 共 175 項通過；各情境引用的案例名稱列在本頁下方。
 - **線上執行**：2026-11-28 由 AI 代理（Claude Code）以瀏覽器自動化連接真實 Google Sheets，62 項檢查全部通過
   （[逐項結果](acceptance-e2e-2026-11-28.json)）。使用本組自製測試表，斷網以故障注入模擬，細節與限制見
   [SF-04 驗收紀錄](004-results-export/acceptance.md#真實線上試算表驗收)。
@@ -37,6 +37,8 @@
 | AC-22 | 同次數、題組、無人作答、重啟 | 通過（題組只計一次見自動化測試） | — |
 | AC-23 | 準備中切換、開啟後鎖定、三處一致 | 通過 | [表2 寫回後](005-fair-ranking/evidence/live-sheet-fair.png) |
 | AC-24 | 活動數量、加入碼、組名 | 通過：加入碼與單一未結束活動（組名規則見自動化測試） | — |
+| AC-25 | 準備中退出、開啟競態 | 僅自動化測試（線上執行早於 spec.md v1.2） | — |
+| AC-26 | CSV 可讀單位識別 | 下載的 CSV 已是 `Q:1`、`Q:2`、`G:A`（[下載的 CSV](004-results-export/evidence/live-speed.csv)） | — |
 
 效能基準（spec.md §7：1 位老師、10 組、20 題、2 秒內）由 AC-04 的 10 組自動化測試涵蓋；線上執行（2 組、6 題）
 開啟後 160 毫秒同步，結束後 109 毫秒顯示結果。
@@ -195,3 +197,15 @@
 - `tests/integration/activity-groups/activity-groups.test.js`：AC-24 join codes are six characters without the easily confused 0, O, 1 and I
 - `tests/integration/activity-groups/activity-groups.test.js`：AC-24 a group name is 1 to 30 Unicode characters after trimming
 - `tests/integration/activity-groups/activity-groups.test.js`：AC-24 groups joining with the same name at the same moment: only one succeeds
+
+### AC-25
+
+- `tests/integration/activity-groups/activity-groups.test.js`：AC-25 leaving preparation removes only the current group and lets the same browser join again
+- `tests/integration/activity-groups/activity-groups.test.js`：AC-25 leaving requires the active group Cookie, same Origin and its CSRF token
+- `tests/integration/activity-groups/activity-groups.test.js`：AC-25 leaving rejects a stale preparation page after opening or closing and keeps accepted answers
+- `tests/integration/activity-groups/activity-groups.test.js`：AC-25 leaving and opening at the same moment end in exactly one consistent state
+- `tests/integration/activity-groups/activity-groups.test.js`：AC-25 the live stream of a group that left ends without showing the activity again
+
+### AC-26
+
+- `tests/integration/results-export/results-export.test.js`：AC-19 and AC-26 the teacher downloads the same results as CSV with readable unit ids, and students cannot
