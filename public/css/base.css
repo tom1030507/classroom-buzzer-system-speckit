@@ -171,6 +171,7 @@ a {
 #app,
 .stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-5);
 }
 
@@ -638,6 +639,14 @@ fieldset .actions:has(input:disabled) label {
   color: var(--color-muted);
   background: var(--color-surface);
   white-space: nowrap;
+}
+
+:is(.buzzer-monitor-table, .results-table) tbody th {
+  min-width: 7em;
+}
+
+:is(.buzzer-monitor-table, .results-table) .answer-text {
+  min-width: 12em;
 }
 
 :is(.buzzer-monitor-table, .results-table) tbody tr:hover {
