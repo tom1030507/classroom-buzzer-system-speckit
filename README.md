@@ -115,16 +115,22 @@ printf '{"feature_directory": "specs/002-sheets-import"}\n' > .specify/feature.j
 
 ## 分工表
 
-依 spec.md §9.2，只記錄真實的 PR、作者與審閱者，完成後再填入。
+依 spec.md §9.2，只記錄真實的 PR、作者與審閱者，完成後再填入。審閱者欄連到實際的 review；標「合併」者由該組員
+合併，沒有另留 review。
 
 | 項目 | 負責人 | Issue | 實作 PR | 審閱者 | 驗收紀錄 |
 | --- | --- | --- | --- | --- | --- |
-| 基礎架構 | 45678XYZ | [#1](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/1) | [#23](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/23) | tom1030507 | — |
+| 基礎架構 | 45678XYZ | [#1](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/1) | [#23](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/23) | [tom1030507](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/23#pullrequestreview-5973187448) | — |
+| 基礎架構：#23 審查修正 | 45678XYZ | — | [#27](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/27) | [tom1030507](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/27#pullrequestreview-5988765226) | — |
 | SF-01 活動與組別 | tom1030507 | [#2](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/2) | [#24](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/24#pullrequestreview-5980074217) | [驗收](specs/001-activity-groups/acceptance.md) |
+| SF-01 準備中退出組別 | tom1030507 | — | [#28](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/28) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/28#pullrequestreview-5987302710) | [驗收](specs/001-activity-groups/acceptance.md) |
+| SF-01 跨組規則（AC-24） | 45678XYZ | [#32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32) | [#34](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/34) | tom1030507（合併） | [驗收](specs/001-activity-groups/acceptance.md) |
 | SF-02 線上題目匯入 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | [#25](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/25#pullrequestreview-5980074666) | [驗收](specs/002-sheets-import/acceptance.md) |
+| SF-02 真實 Sheets 驗收 | tom1030507 | [#5](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/5) | [#30](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/30) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/30#pullrequestreview-5989389302) | [驗收](specs/002-sheets-import/acceptance.md) |
 | SF-03 即時搶答 | tom1030507 | [#9](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/9) | [#26](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/26) | [45678XYZ](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/26#pullrequestreview-5980075044) | [驗收](specs/003-realtime-buzzer/acceptance.md) |
 | SF-04 結果與匯出 | 45678XYZ | [#13](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/13) | [#29](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/29) | [tom1030507](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/29#pullrequestreview-5988427557) | [驗收](specs/004-results-export/acceptance.md) |
-| SF-05 公平排序 | 45678XYZ | [#17](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/17) | [#31](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/31) | — | [驗收](specs/005-fair-ranking/acceptance.md) |
+| SF-05 公平排序 | 45678XYZ | [#17](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/17) | [#31](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/31) | [tom1030507](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/31#pullrequestreview-5990459360) | [驗收](specs/005-fair-ranking/acceptance.md) |
+| 跨組規格 v1.1 | 45678XYZ | [#32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32) | [#33](https://github.com/tom1030507/classroom-buzzer-system-speckit/pull/33) | tom1030507（合併） | — |
 
 ## 系統圖表
 
