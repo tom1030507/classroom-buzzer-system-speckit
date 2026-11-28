@@ -398,6 +398,10 @@ button:disabled {
   border-color: rgb(198 40 40 / 30%);
 }
 
+.panel .status--error {
+  border-color: rgb(198 40 40 / 30%);
+}
+
 .status--warning {
   --dot: var(--color-warning);
 }
