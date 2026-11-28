@@ -51,15 +51,14 @@ function createUnitView() {
 function renderUnit(view, unit, groups, activity) {
   const questions = unit.questions;
   const title = questions.map(({ key }) => `第 ${key} 題`).join('、');
-  const sorted = [...unit.submissions].sort((a, b) => a.acceptSeq - b.acceptSeq);
-  const accepted = new Map(sorted.map((entry, index) => [entry.groupId, { entry, rank: index + 1 }]));
+  const accepted = new Map(unit.submissions.map((entry) => [entry.groupId, entry]));
   const rows = groups.map((group) => {
     const submission = accepted.get(group.id);
-    const answers = new Map(submission?.entry.answers.map((answer) => [answer.questionKey, answer.text]));
+    const answers = new Map(submission?.answers.map((answer) => [answer.questionKey, answer.text]));
     return h('tr', null,
       h('th', { scope: 'row' }, group.name),
       h('td', null, submission ? '已送出' : '未送出'),
-      h('td', null, submission?.rank ?? '—'),
+      h('td', null, submission?.acceptSeq ?? '—'),
       ...questions.map(({ key }) => h('td', { class: 'answer-text' }, answers.get(key) ?? '—')),
     );
   });
