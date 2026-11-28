@@ -13,17 +13,17 @@
 
 | 情境 | 內容 | 線上執行（自動化） | 人工證據 |
 | --- | --- | --- | --- |
-| AC-01 | 真實 Sheets 匯入五題 | 通過：表1 匯入 6 題，題號與格位一致 | [SF-02 以課程範本副本匯入](002-sheets-import/acceptance.md#真實線上試算表驗收)（tom1030507，11/20） |
+| AC-01 | 真實 Sheets 匯入五題 | 通過：表1 匯入 6 題，題號與格位一致 | [SF-02 以課程範本副本匯入](002-sheets-import/acceptance.md#真實線上試算表驗收)（tom1030507，11/20）；[人工速度場](004-results-export/acceptance.md#人工操作速度模式2026-11-28) |
 | AC-02 | 另一版面與不連續題號 | 通過：表3 匯入並寫回新位置 | [表3 寫回後](004-results-export/evidence/live-sheet-moved.png)；匯入見 [SF-02](002-sheets-import/acceptance.md#真實線上試算表驗收) |
 | AC-03 | 零題、重複或非法標記、合併格、無權限、斷網 | 本次未重做 | [SF-02 真實試算表](002-sheets-import/acceptance.md#ac-03-錯誤回報及既有資料保留)（tom1030507，11/20） |
 | AC-04 | 準備中可加入不可送出，開啟後拒絕新組，2 秒同步 | 通過：開啟後 160 毫秒同步，新組被拒絕 | — |
-| AC-05 | 速度模式各題分別勝出 | 通過 | — |
+| AC-05 | 速度模式各題分別勝出 | 通過 | [人工速度場](004-results-export/acceptance.md#人工操作速度模式2026-11-28) |
 | AC-06 | 並行同題、同時間戳 | 僅自動化測試 | — |
 | AC-07 | 雙擊、重試、改答案重送 | 通過：改答案重送仍是第一筆 | — |
 | AC-08 | 空白、超長、無效單位、冒用他組 | 僅自動化測試 | — |
 | AC-09 | 搶答中學生看不到他組資訊 | 通過：學生畫面與 API（事件串流見自動化測試） | — |
 | AC-10 | 結束與送出並行 | 僅自動化測試 | — |
-| AC-11 | 固定完整結果、無人作答明示 | 通過（禁止修改見自動化測試） | — |
+| AC-11 | 固定完整結果、無人作答明示 | 通過（禁止修改見自動化測試） | [人工速度場](004-results-export/acceptance.md#人工操作速度模式2026-11-28) |
 | AC-12 | 寫回中文、換行、`=` 開頭為純文字 | 通過：API 逐格讀回 | 表1 寫回後：[學習單](004-results-export/evidence/live-sheet-speed.png)、[跨表驗收](004-results-export/evidence/live-sheet-speed-page2.png) |
 | AC-13 | 移動、刪除、改寫格位時停止 | 通過：五種變更與預覽後改寫 | — |
 | AC-14 | 失敗、逾時後重試與重複匯出 | 通過：故障注入 | — |
@@ -31,7 +31,7 @@
 | AC-16 | 學生呼叫教師操作、答案含腳本 | 通過：腳本只顯示為文字（授權見自動化測試） | — |
 | AC-17 | 兩單題與三題題組分散寫回 | 通過 | [表1](004-results-export/evidence/live-sheet-speed.png)、[表2](005-fair-ranking/evidence/live-sheet-fair.png) |
 | AC-18 | 題組缺題、拆送、並行重試、交易失敗 | 僅自動化測試 | — |
-| AC-19 | CSV 編碼、欄位、轉義、排序 | 通過（[下載的 CSV](004-results-export/evidence/live-speed.csv)；學生不可下載見自動化測試） | [以 Excel 開啟](004-results-export/evidence/live-csv-excel.png) |
+| AC-19 | CSV 編碼、欄位、轉義、排序 | 通過（[下載的 CSV](004-results-export/evidence/live-speed.csv)；學生不可下載見自動化測試） | [以 Excel 開啟](004-results-export/evidence/live-csv-excel.png)；[人工速度場下載的 CSV](004-results-export/evidence/live-manual-speed.csv) |
 | AC-20 | CSV 公式防護 | CSV 內容通過 | [以 Excel 開啟](004-results-export/evidence/live-csv-excel.png) |
 | AC-21 | 公平模式勝出較少者優先 | 通過 | — |
 | AC-22 | 同次數、題組、無人作答、重啟 | 通過（題組只計一次見自動化測試） | — |
@@ -43,8 +43,9 @@
 
 ## 尚未完成
 
-- spec.md §8 的人工端到端驗收：以課程單題範本與混合題組範本副本，由人實際操作老師與兩組學生走完兩種模式。
-  本頁的線上執行是自動化操作自製測試表，不能取代它。
+- spec.md §8 的人工端到端驗收只完成一部分：速度模式由 45678XYZ 以自製測試表人工操作到下載 CSV
+  （[紀錄](004-results-export/acceptance.md#人工操作速度模式2026-11-28)），沒有人工寫回。公平模式、衝突與重試
+  情境尚未人工操作，也沒有使用課程單題範本與混合題組範本副本。自動化的線上執行不能取代人工操作。
 
 ## 自動化測試名稱
 

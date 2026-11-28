@@ -1,0 +1,13 @@
+﻿activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,Q:1,1,甲,'=1+1,2026-11-28T09:49:02.374Z,1,1,true
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,Q:1,1,乙組,'+886,2026-11-28T09:49:37.218Z,2,2,false
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,Q:2,2,乙組,'單引號開頭,2026-11-28T09:49:45.752Z,1,1,true
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,Q:2,2,甲,'-3,2026-11-28T09:49:53.768Z,2,2,false
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,G:A,3,乙組,中文,2026-11-28T09:52:17.368Z,1,1,true
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,G:A,4,乙組,"第一行
+第二行",2026-11-28T09:52:17.368Z,1,1,true
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,G:A,5,乙組,'@abc,2026-11-28T09:52:17.368Z,1,1,true
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,G:A,3,甲,aaa,2026-11-28T09:52:40.732Z,2,2,false
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,G:A,4,甲,bbb,2026-11-28T09:52:40.732Z,2,2,false
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,G:A,5,甲,<script>alert(1)</script>,2026-11-28T09:52:40.732Z,2,2,false
+f8db0f67-6931-45bc-895a-23275bc6e467,SPEED,Q:6,6,,,,,,false
