@@ -1,10 +1,19 @@
+<!--
+Sync Impact Report
+- Version change: 1.0.0 → 1.0.1（PATCH：文字澄清）
+- Modified principles: I. spec.md 為唯一產品基準（不再寫死版本號；spec.md 已依 §10 更新至 v1.1，v1.2 另以 PR #36 審查）
+- Added sections: 無；Removed sections: 無
+- Templates: .specify/templates/ 沒有引用 spec.md 版本號，不需修改
+- Follow-ups: 無
+-->
+
 # 課堂搶答系統（SpecKit 組）Constitution
 
 ## Core Principles
 
 ### I. spec.md 為唯一產品基準
 
-- 根目錄 `spec.md`（v1.0 正式版）是產品需求與驗收的唯一基準。本 constitution 規範「怎麼做」，
+- 根目錄 `spec.md`（現行版本以文件開頭標示為準）是產品需求與驗收的唯一基準。本 constitution 規範「怎麼做」，
   `spec.md` 規範「做什麼」；兩者衝突時以 `spec.md` 為準。
 - 功能開發期間不得修改 `spec.md`。任何變更必須依 `spec.md` §10 辦理：記錄原因、影響的
   FR／AC／DC、更新版本號、同步另一 OpenSpec 小組，並以獨立 PR 經另一位組員 review 後合併。
@@ -140,4 +149,4 @@
 - 版本採語意化版本：MAJOR 為移除或重新定義原則；MINOR 為新增原則或實質擴充；PATCH 為文字澄清。
 - 涉及產品行為的變更屬於 `spec.md` 的範疇，依原則 I 的變更程序處理，不能只修改 constitution。
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-19
+**Version**: 1.0.1 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-28
