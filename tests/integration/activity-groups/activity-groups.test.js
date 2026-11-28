@@ -4,10 +4,13 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { setTimeout as delay } from 'node:timers/promises';
 import { startServer } from '../../../src/server.js';
 import { silentLogger } from '../../../src/lib/logger.js';
 import { browser } from '../../helpers/browser.js';
-import { closeActivity, insertActivity, openActivity } from '../../helpers/fixtures.js';
+import {
+  closeActivity, insertActivity, insertSingleUnit, insertSubmission, openActivity,
+} from '../../helpers/fixtures.js';
 import { startTestApp } from '../../helpers/test-app.js';
 
 const password = 'teacher-test-passphrase';
@@ -271,7 +274,7 @@ async function joinAsStudent(app, joinCode, name) {
   return student;
 }
 
-test('leaving preparation removes only the current group and lets the same browser join again', async (t) => {
+test('AC-25 leaving preparation removes only the current group and lets the same browser join again', async (t) => {
   const app = await startTestApp();
   t.after(() => app.close());
   configureTeacher(app.db);
@@ -308,7 +311,7 @@ test('leaving preparation removes only the current group and lets the same brows
     ['Staying group', 'Renamed group']);
 });
 
-test('leaving requires the active group Cookie, same Origin and its CSRF token', async (t) => {
+test('AC-25 leaving requires the active group Cookie, same Origin and its CSRF token', async (t) => {
   const app = await startTestApp();
   t.after(() => app.close());
   insertActivity(app.db, { joinCode: 'AUTHJOIN' });
@@ -326,19 +329,87 @@ test('leaving requires the active group Cookie, same Origin and its CSRF token',
   assert.equal((await student.request('session')).data.group.name, 'Authorized group');
 });
 
-test('leaving rejects a stale preparation page after the activity opens or closes', async (t) => {
+test('AC-25 leaving rejects a stale preparation page after opening or closing and keeps accepted answers', async (t) => {
   const app = await startTestApp();
   t.after(() => app.close());
   const activityId = insertActivity(app.db, { joinCode: 'PHASEJOIN' });
+  const { unitId, questionId } = insertSingleUnit(app.db, activityId, { questionKey: '1' });
   const student = await joinAsStudent(app, 'PHASEJOIN', 'Phase group');
+  const { id: groupId } = app.db.prepare('SELECT id FROM student_groups').get();
   const phases = [[openActivity, 'OPEN'], [closeActivity, 'CLOSED']];
   for (const [advance, status] of phases) {
     advance(app.db, activityId);
+    if (status === 'OPEN') {
+      insertSubmission(app.db, { activityId, unitId, groupId, acceptSeq: 1, answers: [{ questionId, text: 'kept' }] });
+    }
     const response = await student.request('leave', { method: 'POST' });
     assert.equal(response.status, 409);
     assert.equal(response.data.error.code, 'INVALID_PHASE');
     const session = (await student.request('session')).data;
     assert.equal(session.group.name, 'Phase group');
     assert.equal(session.activity.status, status);
+    assert.deepEqual(app.db.prepare('SELECT answer_text AS text FROM submission_answers').all().map(({ text }) => text),
+      ['kept']);
   }
+});
+
+test('AC-25 leaving and opening at the same moment end in exactly one consistent state', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  configureTeacher(app.db);
+  const teacher = await login(app);
+  // Records the phase each group was deleted in, whichever request the server handled first.
+  app.db.exec(`CREATE TEMP TABLE left_during (status TEXT);
+    CREATE TEMP TRIGGER record_leave AFTER DELETE ON student_groups BEGIN
+      INSERT INTO left_during SELECT status FROM activities WHERE id = OLD.activity_id;
+    END;`);
+  for (let round = 0; round < 20; round += 1) {
+    const activityId = insertActivity(app.db, { joinCode: `RACE${round}` });
+    insertSingleUnit(app.db, activityId, { questionKey: '1' });
+    const student = await joinAsStudent(app, `RACE${round}`, 'Racing group');
+    const { importRevision } = (await teacher.request(`activities/${activityId}/live`)).data;
+    const leave = () => student.request('leave', { method: 'POST' });
+    const open = () => teacher.request(`activities/${activityId}/open`, { method: 'POST', body: { importRevision } });
+    // In every other round the opening request gets a head start, so both server orders occur.
+    const headStart = round % 2 ? open() : null;
+    if (headStart) await delay(round % 8);
+    const [left, opened] = await Promise.all([leave(), headStart ?? open()]);
+
+    assert.equal(opened.status, 200);
+    const { n } = app.db.prepare('SELECT count(*) AS n FROM student_groups WHERE activity_id = ?').get(activityId);
+    const session = (await student.request('session')).data;
+    if (left.status === 200) {
+      assert.equal(n, 0);
+      assert.equal(session.group, null);
+    } else {
+      assert.equal(left.status, 409);
+      assert.equal(left.data.error.code, 'INVALID_PHASE');
+      assert.equal(n, 1);
+      assert.equal(session.group.name, 'Racing group');
+    }
+  }
+  const outside = app.db.prepare("SELECT count(*) AS n FROM left_during WHERE status <> 'PREPARING'").get().n;
+  assert.equal(outside, 0);
+});
+
+test('AC-25 the live stream of a group that left ends without showing the activity again', async (t) => {
+  const app = await startTestApp();
+  t.after(() => app.close());
+  const activityId = insertActivity(app.db, { joinCode: 'LEAVELIVE' });
+  insertSingleUnit(app.db, activityId, { questionKey: '1' });
+  const student = await joinAsStudent(app, 'LEAVELIVE', 'Streaming group');
+  const stale = browser(app, 'student');
+  stale.cookies.set('buzzer_group', student.cookies.get('buzzer_group'));
+  const controller = new AbortController();
+  t.after(() => controller.abort());
+  const stream = await stale.request('events', { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]) });
+  const reader = stream.body.pipeThrough(new TextDecoderStream()).getReader();
+  assert.match((await reader.read()).value, /^event: snapshot\n/);
+
+  assert.equal((await student.request('leave', { method: 'POST' })).status, 200);
+  openActivity(app.db, activityId); // a stream that survived would now report the new phase
+  let later = '';
+  for (let message = await reader.read(); !message.done; message = await reader.read()) later += message.value;
+  assert.doesNotMatch(later, /event: snapshot/);
+  assert.equal((await stale.request('events')).status, 401);
 });
