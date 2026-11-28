@@ -139,7 +139,7 @@ test('FR-003 the result view lists every unit in order with ranks, accept order 
         entries: [
           { groupName: 'Alpha', acceptedOrder: 1, acceptedAt: at(1), rank: 1, isWinner: true,
             answers: [{ questionKey: 'Q3', text: 'A first' }] },
-          { groupName: 'Beta', acceptedOrder: 2, acceptedAt: at(3), rank: 2, isWinner: false,
+          { groupName: 'Beta', acceptedOrder: 3, acceptedAt: at(3), rank: 2, isWinner: false,
             answers: [{ questionKey: 'Q3', text: 'B second' }] },
         ],
       },
@@ -147,9 +147,9 @@ test('FR-003 the result view lists every unit in order with ranks, accept order 
         id: grouped.unitId, kind: 'GROUP', label: 'G:A', position: 2, questions: [{ key: 'Q9' }, { key: 'Q14' }],
         noAnswer: false,
         entries: [
-          { groupName: 'Beta', acceptedOrder: 1, acceptedAt: at(2), rank: 1, isWinner: true,
+          { groupName: 'Beta', acceptedOrder: 2, acceptedAt: at(2), rank: 1, isWinner: true,
             answers: [{ questionKey: 'Q9', text: 'B nine' }, { questionKey: 'Q14', text: 'B fourteen' }] },
-          { groupName: 'Alpha', acceptedOrder: 2, acceptedAt: at(4), rank: 2, isWinner: false,
+          { groupName: 'Alpha', acceptedOrder: 4, acceptedAt: at(4), rank: 2, isWinner: false,
             answers: [{ questionKey: 'Q9', text: 'A nine' }, { questionKey: 'Q14', text: 'A fourteen' }] },
         ],
       },
@@ -173,8 +173,8 @@ test('FR-025 the accept order stays separate from a final rank that differs from
     groupName, acceptedOrder, rank, isWinner,
   ]);
   const [first, second] = readResults(db, activityId).units;
-  assert.deepEqual(summary(first), [['Beta', 2, 1, true], ['Alpha', 1, 2, false]]);
-  assert.deepEqual(summary(second), [['Alpha', 2, 1, true], ['Beta', 1, 2, false]]);
+  assert.deepEqual(summary(first), [['Beta', 3, 1, true], ['Alpha', 1, 2, false]]);
+  assert.deepEqual(summary(second), [['Alpha', 4, 1, true], ['Beta', 2, 2, false]]);
 });
 
 test('results are readable only after the activity has closed with saved results', (t) => {

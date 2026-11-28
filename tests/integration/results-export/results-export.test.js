@@ -225,6 +225,7 @@ test('AC-19 and AC-26 the teacher downloads the same results as CSV with readabl
   const lines = new TextDecoder().decode(bytes).split('\r\n');
   assert.equal(lines[0], 'activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner');
   assert.equal(lines.at(-1), '');
+  // accepted_order counts across the activity: 甲組 Q1 first, 乙組 group A second, 乙組 Q1 third.
   assert.deepEqual(lines.slice(1, -1).map((line) => {
     const [id, mode, unitId, questionId, groupName, answerText, , acceptedOrder, rank, isWinner] = line.split(',');
     assert.equal(id, activity.id);
@@ -232,10 +233,10 @@ test('AC-19 and AC-26 the teacher downloads the same results as CSV with readabl
     return [unitId, questionId, groupName, answerText, acceptedOrder, rank, isWinner];
   }), [
     ['Q:1', '1', '甲組', '光合作用', '1', '1', 'true'],
-    ['Q:1', '1', '乙組', '呼吸作用', '2', '2', 'false'],
-    ['G:A', '2', '乙組', '葉綠體', '1', '1', 'true'],
-    ['G:A', '3', '乙組', '二氧化碳', '1', '1', 'true'],
-    ['G:A', '4', '乙組', '氧氣', '1', '1', 'true'],
+    ['Q:1', '1', '乙組', '呼吸作用', '3', '2', 'false'],
+    ['G:A', '2', '乙組', '葉綠體', '2', '1', 'true'],
+    ['G:A', '3', '乙組', '二氧化碳', '2', '1', 'true'],
+    ['G:A', '4', '乙組', '氧氣', '2', '1', 'true'],
     ['Q:5', '5', '', '', '', '', 'false'],
   ]);
   // AC-26: only the CSV names units by label; the JSON results keep their internal ids.

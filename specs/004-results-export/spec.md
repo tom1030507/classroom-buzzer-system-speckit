@@ -16,7 +16,12 @@
 ### Session 2026-11-20
 
 - Q: CSV 的 `unit_id` 欄位要用什麼格式？ → A: 單題為 `Q:<題號>`、題組為 `G:<題組代號>`，可直接對照試算表上的標記。
-- Q: 結果頁與 CSV 的實際受理順序（`accepted_order`）要用哪一種數字？ → A: 單位內名次（1 起算），與 SF-03 教師監看的「受理順序」同義。
+
+### Session 2026-11-28
+
+- Q: 結果頁與 CSV 的實際受理順序（`accepted_order`）要用哪一種數字？ → A: 伺服器的受理序號：整場活動由 1 起跨單位遞增，
+  題組一筆受理用一個序號；教師監看的「受理順序」用同一個數字。取代 2026-11-20 的「單位內名次」，與另一 OpenSpec 小組
+  一致（[#32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32)；根目錄 `spec.md` FR-04、FR-09 稱它為受理序號）。
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -128,7 +133,7 @@
 - **FR-022**（FR-09）：無人作答的題目 MUST 仍有一列，`group_name`、`answer`、`accepted_at`、`accepted_order`、`rank` 留空，`is_winner` 為 `false`。
 - **FR-023**（FR-09、AC-19）：含逗號、雙引號、CR 或 LF 的欄位 MUST 以雙引號包住，內部雙引號重複一次。
 - **FR-024**（FR-09、AC-20）：來自使用者輸入的欄位（組名、答案、題號與單位代號）去除前導空白後若以 `=`、`+`、`-`、`@` 開頭，或原值有前導 tab、CR、LF，MUST 在原值前加一個單引號；資料庫中的原值不變。
-- **FR-025**（FR-06、FR-09、§4）：結果頁與 CSV 的實際受理順序（`accepted_order`）MUST 為該單位內依伺服器受理序號排列的名次（1 為最先受理，與 SF-03 教師監看的「受理順序」同義），`rank` 為最終順位；兩者分開呈現，速度模式下兩者相同。
+- **FR-025**（FR-06、FR-09、§4）：結果頁與 CSV 的實際受理順序（`accepted_order`）MUST 為伺服器分配的受理序號：整場活動由 1 起跨單位遞增，題組一筆受理用一個序號，與 SF-03 教師監看的「受理順序」是同一個數字；`rank` 為單位內的最終順位，兩者分開呈現。
 
 ### Key Entities *(include if feature involves data)*
 

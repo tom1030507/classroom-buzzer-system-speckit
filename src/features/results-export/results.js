@@ -62,7 +62,8 @@ export function listWinningAnswers(db, activityId) {
 
 /**
  * The fixed results shared by the result pages, the CSV and the Sheets write-back
- * (specs/004-results-export/data-model.md). Contains no internal group or sequence ids.
+ * (specs/004-results-export/data-model.md). Contains no internal group ids; acceptedOrder is the
+ * server's acceptance sequence across the whole activity (FR-025).
  */
 export function readResults(db, activityId) {
   const { id, mode, status } = getActivity(db, activityId);
@@ -85,7 +86,7 @@ export function readResults(db, activityId) {
   const entries = new Map();
   for (const row of db.prepare(`
     SELECT s.id AS submissionId, s.unit_id AS unitId, g.name AS groupName, s.accepted_at AS acceptedAt,
-           ROW_NUMBER() OVER (PARTITION BY s.unit_id ORDER BY s.accept_seq) AS acceptedOrder,
+           s.accept_seq AS acceptedOrder,
            r.final_rank AS rank, r.is_winner AS isWinner
     FROM submissions AS s
     JOIN student_groups AS g ON g.id = s.group_id

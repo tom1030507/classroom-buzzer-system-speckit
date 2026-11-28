@@ -134,6 +134,7 @@ description: "SF-04 結果與匯出的任務清單"
 - [X] T035 建立 `specs/004-results-export/acceptance.md`：列出每個 AC 對應的自動化測試，以及待真實雲端試算表與試算表軟體完成的人工驗收項目（AC-12、AC-13、AC-14、AC-17、AC-02、AC-20）
 - [X] T036 依 `after_implement` hook 執行 `/speckit-plantuml-sync`，產生 `specs/004-results-export/diagram-sync.md` 並更新圖表
 - [X] T037 [US3] （#32，AC-26）在 `tests/integration/results-export/results-export.test.js` 的 CSV 下載測試確認 `unit_id` 標籤與 JSON 內部 ID；程式與圖表不變
+- [X] T038 [US1] （#32）`accepted_order` 改用整場受理序號：`src/features/results-export/results.js`、`public/teacher/realtime-buzzer.js`，更新結果與公平排序測試及 SF-03～SF-05 文件；圖表不變
 
 ---
 
