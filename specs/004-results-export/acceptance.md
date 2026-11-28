@@ -26,6 +26,8 @@ Node.js 26.5.0 上執行 `npm test` 全部通過，其中 SF-04 的測試有 36 
 - **AC-19**。CSV 為 UTF-8 BOM、CRLF、固定欄位，逗號、雙引號與換行正確轉義，依單位順序、最終順位、組內題序排列，
   無人作答的題目一列；HTTP 下載的標頭與內容和結果一致，學生無法下載。
   [CSV 測試](../../tests/unit/results-export/csv.test.js)
+- **AC-26（2026-11-28，#32）**。CSV 的 `unit_id` 單題為 `Q:題號`、題組成員為 `G:代號`，無人作答的列相同；JSON 結果仍用
+  內部整數 ID。[HTTP 測試](../../tests/integration/results-export/results-export.test.js)
 - **AC-20（自動化部分）**。組名、答案、題號去除前導空白後以 `=`、`+`、`-`、`@` 開頭，或以 tab、CR、LF 開頭時，
   前面加上單引號；一般文字不變；產生 CSV 不會修改結果資料。
 - **上線前已結束的活動**。migration 依受理序號補齊速度模式活動的結果；公平模式與已有結果的活動不受影響。

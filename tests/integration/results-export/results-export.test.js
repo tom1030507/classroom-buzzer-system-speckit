@@ -207,7 +207,7 @@ test('only the teacher can preview and write back, with Origin and CSRF checks, 
   assert.deepEqual((await teacher.request(exportPath)).data, written.data);
 });
 
-test('AC-19 the teacher downloads the same results as CSV after closing, and students cannot', async (t) => {
+test('AC-19 and AC-26 the teacher downloads the same results as CSV with readable unit ids, and students cannot', async (t) => {
   const { app, teacher, activity, alpha } = await fixture(t);
   const csvPath = api(activity.id, 'results.csv');
   assert.equal((await teacher.request(csvPath)).data.error.code, 'INVALID_PHASE');
@@ -238,4 +238,8 @@ test('AC-19 the teacher downloads the same results as CSV after closing, and stu
     ['G:A', '4', '乙組', '氧氣', '1', '1', 'true'],
     ['Q:5', '5', '', '', '', '', 'false'],
   ]);
+  // AC-26: only the CSV names units by label; the JSON results keep their internal ids.
+  const { data: view } = await teacher.request(api(activity.id, 'results'));
+  assert.deepEqual(view.units.map(({ label }) => label), ['Q:1', 'G:A', 'Q:5']);
+  assert.ok(view.units.every(({ id }) => Number.isInteger(id)));
 });

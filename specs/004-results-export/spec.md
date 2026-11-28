@@ -8,7 +8,7 @@
 
 **Input**: User description: "依 spec.md §9.1 實作 SF-04「結果與匯出」：FR-06、FR-07、FR-09，驗收 AC-11～AC-14、AC-17（寫回部分）、AC-19、AC-20，另含 AC-02 與 AC-15 的寫回／結果部分。User Story 對應 GitHub #14（結束時保存結果〔速度模式〕與結果檢視）、#15（CSV 結果匯出）、#16（線上寫回原 Google Sheets）。依 §9.1，SF-04 先完成速度模式結果，公平模式的順位計算由 SF-05 擴充。"
 
-負責人：45678XYZ。對應 GitHub #13（總覽）、#14、#15、#16。產品基準為根目錄 [`spec.md`](../../spec.md) v1.0；
+負責人：45678XYZ。對應 GitHub #13（總覽）、#14、#15、#16。產品基準為根目錄 [`spec.md`](../../spec.md) v1.0（AC-26 依 v1.2，#32）；
 本文件的需求編號 FR-001 起為本功能需求，括號內標註對應的 `spec.md` FR／AC 編號。
 
 ## Clarifications
@@ -124,7 +124,7 @@
 
 - **FR-019**（FR-09、AC-19）：只有老師 MUST 能在活動結束後下載 CSV；學生、未登入者或未結束的活動一律拒絕。
 - **FR-020**（FR-09）：CSV MUST 以 UTF-8（含 BOM）編碼、CRLF 換行，第一列為固定欄位 `activity_id, mode, unit_id, question_id, group_name, answer, accepted_at, accepted_order, rank, is_winner`。
-- **FR-021**（FR-09）：每筆受理 MUST 依題目展開為每題一列，依單位固定順序、最終順位、組內題序排序；時間為 UTC ISO 8601；`is_winner` 為 `true` 或 `false`。`unit_id` 單題為 `Q:<題號>`、題組為 `G:<題組代號>`，`question_id` 為原題號。
+- **FR-021**（FR-09）：每筆受理 MUST 依題目展開為每題一列，依單位固定順序、最終順位、組內題序排序；時間為 UTC ISO 8601；`is_winner` 為 `true` 或 `false`。`unit_id` 單題為 `Q:<題號>`、題組為 `G:<題組代號>`（AC-26；資料庫與 JSON API 仍使用內部 ID），`question_id` 為原題號。
 - **FR-022**（FR-09）：無人作答的題目 MUST 仍有一列，`group_name`、`answer`、`accepted_at`、`accepted_order`、`rank` 留空，`is_winner` 為 `false`。
 - **FR-023**（FR-09、AC-19）：含逗號、雙引號、CR 或 LF 的欄位 MUST 以雙引號包住，內部雙引號重複一次。
 - **FR-024**（FR-09、AC-20）：來自使用者輸入的欄位（組名、答案、題號與單位代號）去除前導空白後若以 `=`、`+`、`-`、`@` 開頭，或原值有前導 tab、CR、LF，MUST 在原值前加一個單引號；資料庫中的原值不變。

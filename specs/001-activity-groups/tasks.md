@@ -10,3 +10,4 @@
 - [x] T003（#2，FR-01，DC-02、DC-03）對照三張圖表、[資料模型](data-model.md)、[契約](contracts/activity-groups.md)及 [驗收紀錄](acceptance.md)。
 - [x] T004（#24 審查，US3，FR-01，AC-04、AC-08、AC-15）在 `activities.js`、`router.js`、`sessions.js` 與學生頁支援退出準備中的活動；HTTP 測試涵蓋只移除本人、原 Cookie 失效、同瀏覽器重新加入、授權及階段限制。
 - [x] T005（#32，US4，FR-01，AC-24）在 `activities.js` 限制同時一場未結束活動、改用六碼加入碼、組名上限 30；教師頁在階段改變時清除拒絕訊息。測試先行寫於 `tests/integration/activity-groups/activity-groups.test.js`，並調整 SF-05 兩項依賴多場活動的測試；更新本功能文件與圖表。
+- [x] T006（#32，US3，FR-01，AC-25）在 `tests/integration/activity-groups/activity-groups.test.js` 為退出行為補上 AC-25 測試（含與開啟並行、舊即時連線），更新本功能文件；程式與圖表不變。
